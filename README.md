@@ -48,6 +48,22 @@ Free Render plan par 15 minute khaali rehne ke baad app so jata hai. Agla pehla 
 
 ---
 
+## ▲ Vercel par deploy (free, Supabase zaroori)
+
+Vercel serverless hai, wahan `data.json` save nahi hota. Isliye Vercel par data **hamesha Supabase** mein rehta hai.
+1. Upar wale Supabase steps kijiye (`schema.sql` Run, URL + secret key copy).
+2. https://vercel.com/new par **GitHub se import** kijiye aur repo **or-menu** chuniye.
+3. **Framework Preset: Other**. Build/Output settings ko waise hi chhodiye, `vercel.json` sab set kar deta hai.
+4. **Environment Variables** mein `SUPABASE_URL` aur `SUPABASE_SERVICE_KEY` daaliye, phir **Deploy** dabaiye.
+5. Link milega: `https://or-menu-xxxx.vercel.app`. Admin: `/admin`. Health check: `/healthz`.
+
+**Kaise kaam karta hai:** pages Vercel ki static hosting (`public/`) se aate hain, aur `/api/*` requests `api/index.js` function mein jaati hain.
+- Har request Supabase se taaza data padhti hai aur jawab se pehle **version check** ke saath save karti hai.
+- Do log ek saath badlein toh takkar hone par request khud dobara chalti hai, kisi ka data nahi mitta.
+- Render par koi farak nahi padta, wahan pehle jaisa long-running server chalta hai.
+
+---
+
 ## 🍛 Menu (sample, har dish ke fix points)
 
 Ye menu pehli baar chalane par apne aap banta hai. Owner ise **Admin → Menu & points** mein badal sakta hai: dish jodna ya hatana, price, points, category, Veg/Non-veg.
@@ -128,6 +144,7 @@ Example: 2× Paneer Tikka + 1× Sweet Lassi = 26+26+9 = **61 points** (Gold par 
 | `reset-owner.js` | Owner password reset |
 | `start.bat` | Windows par ek click se chalaiye |
 | `render.yaml` | Render par one-click deploy |
+| `vercel.json`, `api/index.js` | Vercel par deploy (static pages + serverless API) |
 | `supabase/schema.sql` | Supabase table (ek baar chalana hai) |
 
 Saara data `data.json` mein save hota hai: customers, orders, passwords ke hash. **Ye file git mein nahi jaati** (`.gitignore`). Iska alag se backup rakhiye.

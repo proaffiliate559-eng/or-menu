@@ -72,13 +72,17 @@ async function loadDb() {
   // load fail ho toh setup-error mode — khaali data se asli data kabhi overwrite nahi hoga
   const kp = keyProblem(SUPA.key); if (kp) throw new Error(kp);
   // time-limit zaroori: bina iske galat URL / paused project par request hamesha atak jaati thi
-  const r = await fetch(`${SUPA.url}/rest/v1/${SUPA.table}?id=eq.${encodeURIComponent(SUPA.row)}&select=data`, { headers: supaHeaders(), signal: AbortSignal.timeout(15000) });
+  const r = await fetch(`${SUPA.url}/rest/v1/${SUPA.table}?id=eq.${encodeURIComponent(SUPA.row)}&select=data,updated_at`, { headers: supaHeaders(), signal: AbortSignal.timeout(15000) });
   if (!r.ok) throw new Error(`Supabase se data load nahi hua (HTTP ${r.status}): ${(await r.text()).slice(0, 300)}`);
   const rows = await r.json();
+  dbVersion = rows[0]?.updated_at || null; // Vercel ke version-check ke liye
   return rows[0]?.data || DEFAULT_DATA();
 }
 
 let db = DEFAULT_DATA(); // boot() mein asli data aata hai
+// Vercel (serverless): har request taaza data load karti hai aur jawab se pehle save karti hai
+const ON_VERCEL = !!process.env.VERCEL;
+let dbVersion = null, pendingWrite = false;
 let saveTimer = null, saving = null, dirty = false;
 function pushRemote() {
   if (saving) { dirty = true; return saving; }
@@ -101,6 +105,7 @@ function pushRemote() {
 }
 function save() {
   if (setupError) return; // data load hi nahi hua — kuch save mat karo (asli data safe)
+  if (ON_VERCEL) { pendingWrite = true; return; } // request ke aakhir mein version-check ke saath likha jayega
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => { if (SUPA) pushRemote(); else writeFileNow(); }, SUPA ? 300 : 100);
 }
@@ -268,6 +273,9 @@ function send(res, code, obj) {
   res.end(JSON.stringify(obj));
 }
 function body(req) {
+  // Vercel body pehle hi parse kar deta hai (req.body); baaki jagah stream padho
+  if (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) return Promise.resolve(req.body);
+  if (typeof req.body === 'string' || Buffer.isBuffer(req.body)) { try { return Promise.resolve(JSON.parse(String(req.body) || '{}')); } catch { return Promise.resolve({}); } }
   return new Promise(resolve => {
     let b = ''; req.on('data', c => { b += c; if (b.length > 1e5) req.destroy(); });
     req.on('end', () => { try { resolve(JSON.parse(b || '{}')); } catch { resolve({}); } });
@@ -606,6 +614,18 @@ p{line-height:1.55}code{background:#f1ebe3;padding:2px 6px;border-radius:6px}.d{
 <body><div class="c"><span class="t">⚙️ Setup baaki hai</span><h1>${setupError.title}</h1><p>${setupError.fix}</p><p class="d">Technical detail: ${String(setupError.detail).replace(/[<>&]/g, '')}</p><p style="font-size:13px;color:#8b7d72">Ye page har 30 second mein khud refresh hota hai. Theek hote hi app khul jayega. Aapka koi data nahi mita hai.</p></div></body></html>`);
 }
 
+// API route chalana (Render/local aur Vercel dono yahi use karte hain)
+function apiDispatch(req, key, pathname, b) {
+  const h = routes[key];
+  if (!h) return [404, { error: 'Not found' }];
+  if (pathname.startsWith('/api/admin/') && key !== 'POST /api/admin/login') {
+    req.staff = staffFromReq(req);
+    if (!req.staff) return [401, { error: 'Admin login required' }];
+    if (OWNER_ONLY.has(key) && req.staff.role !== 'owner') return [403, { error: 'Ye kaam sirf Owner kar sakta hai' }];
+  }
+  return h(req, b);
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   const key = `${req.method} ${url.pathname}`;
@@ -613,15 +633,8 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/healthz') return send(res, 200, { ok: true, storage: SUPA ? 'supabase' : 'file', setupError: setupError ? setupError.title : null });
     if (setupError) return setupPage(res, url.pathname.startsWith('/api/'));
     if (url.pathname.startsWith('/api/')) {
-      const h = routes[key];
-      if (!h) return send(res, 404, { error: 'Not found' });
-      if (url.pathname.startsWith('/api/admin/') && key !== 'POST /api/admin/login') {
-        req.staff = staffFromReq(req);
-        if (!req.staff) return send(res, 401, { error: 'Admin login required' });
-        if (OWNER_ONLY.has(key) && req.staff.role !== 'owner') return send(res, 403, { error: 'Ye kaam sirf Owner kar sakta hai' });
-      }
       const b = req.method === 'POST' ? await body(req) : {};
-      const [code, obj] = h(req, b);
+      const [code, obj] = apiDispatch(req, key, url.pathname, b);
       return send(res, code, obj);
     }
     if (url.pathname === '/' || url.pathname === '/index.html') return serveStatic(res, 'index.html');
@@ -643,6 +656,64 @@ function prepareDb(loaded) {
   db.settings = { ...DEFAULT_DATA().settings, ...(db.settings || {}) };
   migrateMenu(); migrateStaff(); save();
 }
+
+// ---------- Vercel handler ----------
+// Version-check write: sirf tab likho jab Supabase mein wahi version ho jo humne padha tha.
+// Kisi aur request ne beech mein badla ho toh false → request dobara chalegi (kisi ka badlav nahi mitega).
+async function writeVersioned() {
+  const now = new Date().toISOString();
+  const base = `${SUPA.url}/rest/v1/${SUPA.table}`;
+  if (dbVersion) {
+    const r = await fetch(`${base}?id=eq.${encodeURIComponent(SUPA.row)}&updated_at=eq.${encodeURIComponent(dbVersion)}`, {
+      method: 'PATCH', headers: { ...supaHeaders(), Prefer: 'return=representation' }, signal: AbortSignal.timeout(15000),
+      body: JSON.stringify({ data: db, updated_at: now })
+    });
+    if (!r.ok) throw new Error(`Supabase save fail (HTTP ${r.status}): ${(await r.text()).slice(0, 200)}`);
+    return (await r.json()).length > 0;
+  }
+  const r = await fetch(base, { method: 'POST', headers: { ...supaHeaders(), Prefer: 'return=minimal' }, signal: AbortSignal.timeout(15000), body: JSON.stringify({ id: SUPA.row, data: db, updated_at: now }) });
+  if (r.status === 409) return false; // kisi aur ne pehle row bana di
+  if (!r.ok) throw new Error(`Supabase save fail (HTTP ${r.status}): ${(await r.text()).slice(0, 200)}`);
+  return true;
+}
+// Ek instance ke andar requests line mein (Vercel "Fluid compute" ek instance mein kai requests ek saath chala sakta hai,
+// aur db/dbVersion global hain). Alag instances ke beech version-check takkar sambhalta hai.
+let vercelQueue = Promise.resolve();
+function vercelHandler(req, res) {
+  const run = vercelQueue.then(() => vercelHandleOne(req, res));
+  vercelQueue = run.catch(() => {});
+  return run;
+}
+async function vercelHandleOne(req, res) {
+  const url = new URL(req.url, 'http://x');
+  // vercel.json rewrite "/api/:p*" → "/api/index?__p=:p*"; asli path wapas banao
+  let pathname = url.pathname;
+  if (url.searchParams.has('__p')) pathname = url.searchParams.get('__p') === '__healthz' ? '/healthz' : '/api/' + url.searchParams.get('__p');
+  const key = `${req.method} ${pathname}`;
+  try {
+    if (!SUPA) { setupError = { title: 'Vercel par Supabase zaroori hai', fix: 'Vercel → Project → Settings → <b>Environment Variables</b> mein <b>SUPABASE_URL</b> aur <b>SUPABASE_SERVICE_KEY</b> daaliye, phir <b>Redeploy</b> kijiye. Vercel par data.json save nahi hota.', detail: 'SUPABASE_URL / SUPABASE_SERVICE_KEY missing' }; }
+    if (pathname === '/healthz') return send(res, 200, { ok: true, storage: SUPA ? 'supabase' : 'none', host: 'vercel', setupError: setupError ? setupError.title : null });
+    if (!SUPA) return setupPage(res, pathname.startsWith('/api/'));
+    if (!pathname.startsWith('/api/')) return setupPage(res, false);
+    const b = req.method === 'POST' ? await body(req) : {};
+    for (let attempt = 0; attempt < 8; attempt++) {
+      let loaded;
+      try { loaded = await loadDb(); } catch (e) { setupError = diagnose(e); return setupPage(res, true); }
+      setupError = null; pendingWrite = false;
+      const before = JSON.stringify(loaded);
+      prepareDb(loaded);
+      pendingWrite = JSON.stringify(db) !== before; // migrations ne kuch badla?
+      const [code, obj] = apiDispatch(req, key, pathname, b);
+      if (!pendingWrite) return send(res, code, obj);
+      if (await writeVersioned()) return send(res, code, obj);
+      await new Promise(r => setTimeout(r, Math.min(1500, 60 * 2 ** attempt) * (0.5 + Math.random()))); // takkar: badhte intezaar ke saath dobara
+    }
+    return send(res, 503, { error: 'Abhi bahut log ek saath hain, dobara try kijiye' });
+  } catch (e) {
+    console.error(e); return send(res, 500, { error: 'Server error' });
+  }
+}
+if (ON_VERCEL) module.exports = vercelHandler;
 async function tryLoad() {
   try {
     const loaded = await loadDb();
@@ -654,7 +725,7 @@ async function tryLoad() {
   }
   catch (e) { setupError = diagnose(e); console.error('\n❌ ' + setupError.title + ' — ' + e.message + '\n   30 second baad dobara koshish...\n'); return false; }
 }
-(async function boot() {
+if (!ON_VERCEL) (async function boot() {
   // PEHLE port kholo (Render ko turant "open port" dikhe), PHIR data load karo.
   // Load hone tak har request ko "shuru ho raha hai" page milta hai; fail ho toh setup page + 30s retry.
   setupError = { title: 'App shuru ho raha hai…', fix: 'Bas kuch second. Ye page apne aap refresh ho jayega.', detail: 'loading data' };
