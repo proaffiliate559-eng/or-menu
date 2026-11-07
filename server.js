@@ -694,7 +694,13 @@ async function vercelHandleOne(req, res) {
     if (!SUPA) { setupError = { title: 'Vercel par Supabase zaroori hai', fix: 'Vercel → Project → Settings → <b>Environment Variables</b> mein <b>SUPABASE_URL</b> aur <b>SUPABASE_SERVICE_KEY</b> daaliye, phir <b>Redeploy</b> kijiye. Vercel par data.json save nahi hota.', detail: 'SUPABASE_URL / SUPABASE_SERVICE_KEY missing' }; }
     if (pathname === '/healthz') return send(res, 200, { ok: true, storage: SUPA ? 'supabase' : 'none', host: 'vercel', setupError: setupError ? setupError.title : null });
     if (!SUPA) return setupPage(res, pathname.startsWith('/api/'));
-    if (!pathname.startsWith('/api/')) return setupPage(res, false);
+    if (!pathname.startsWith('/api/')) {
+      // backup: agar koi page request function tak aa jaye toh file khud bhejo
+      if (pathname === '/' || pathname === '/index.html') return serveStatic(res, 'index.html');
+      if (pathname === '/admin' || pathname === '/admin.html') return serveStatic(res, 'admin.html');
+      if (pathname === '/favicon.ico') return serveStatic(res, 'favicon.svg');
+      return serveStatic(res, pathname.slice(1));
+    }
     const b = req.method === 'POST' ? await body(req) : {};
     for (let attempt = 0; attempt < 8; attempt++) {
       let loaded;

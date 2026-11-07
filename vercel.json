@@ -3,6 +3,7 @@
   "rewrites": [
     { "source": "/api/:p*", "destination": "/api/index?__p=:p*" },
     { "source": "/healthz", "destination": "/api/index?__p=__healthz" },
+    { "source": "/", "destination": "/index.html" },
     { "source": "/admin", "destination": "/admin.html" },
     { "source": "/favicon.ico", "destination": "/favicon.svg" }
   ],
