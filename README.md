@@ -28,6 +28,26 @@ node server.js        # ya Windows par start.bat double-click
 
 ---
 
+## ☁️ Free hosting: Render (app) + Supabase (data)
+
+**1. Supabase (database)**
+1. https://supabase.com par free project banaiye.
+2. **SQL Editor** kholiye, [`supabase/schema.sql`](supabase/schema.sql) ka code paste karke **Run** kijiye.
+3. **Project Settings → API** se ye do cheezein copy kijiye:
+   - **Project URL** (jaise `https://abcd.supabase.co`)
+   - **secret key** (`sb_secret_...`) ya purana **service_role** key. ⚠️ Ise kabhi kisi ko na dein, aur na hi code mein likhein.
+
+**2. Render (app server)**
+1. https://render.com par GitHub se sign up kijiye.
+2. **New → Blueprint** chuniye, aur ye repo (`or-menu`) select kijiye. `render.yaml` se setup apne aap ho jayega.
+3. Puchhe jaane par `SUPABASE_URL` aur `SUPABASE_SERVICE_KEY` daaliye, phir **Apply** dabaiye.
+4. 2-3 minute mein link milega: `https://or-menu-xxxx.onrender.com`. Admin: `/admin`.
+
+**Kaise kaam karta hai:** `SUPABASE_URL` + `SUPABASE_SERVICE_KEY` set hon toh saara data Supabase ki `app_state` table mein save hota hai (restart par bhi safe). Set na hon toh local `data.json` use hota hai.
+Free Render plan par 15 minute khaali rehne ke baad app so jata hai. Agla pehla load ~30-50 second leta hai, data safe rehta hai.
+
+---
+
 ## 🍛 Menu (sample, har dish ke fix points)
 
 Ye menu pehli baar chalane par apne aap banta hai. Owner ise **Admin → Menu & points** mein badal sakta hai: dish jodna ya hatana, price, points, category, Veg/Non-veg.
@@ -107,6 +127,8 @@ Example: 2× Paneer Tikka + 1× Sweet Lassi = 26+26+9 = **61 points** (Gold par 
 | `public/style.css` | Shared design (light/dark) |
 | `reset-owner.js` | Owner password reset |
 | `start.bat` | Windows par ek click se chalaiye |
+| `render.yaml` | Render par one-click deploy |
+| `supabase/schema.sql` | Supabase table (ek baar chalana hai) |
 
 Saara data `data.json` mein save hota hai: customers, orders, passwords ke hash. **Ye file git mein nahi jaati** (`.gitignore`). Iska alag se backup rakhiye.
 Hosting par `DATA_DIR=/data` set karke data ko persistent disk par rakh sakte hain.

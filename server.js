@@ -43,19 +43,62 @@ const DEFAULT_DATA = () => ({
   adminSessions: {}
 });
 
-let db;
-try { db = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); }
-catch { db = DEFAULT_DATA(); }
-let saveTimer = null;
+// ---------- Storage: Supabase (hosting par) ya data.json (local) ----------
+// Supabase set ho toh poora data ek jsonb row mein save hota hai (REST API, koi npm package nahi).
+// Env: SUPABASE_URL, SUPABASE_SERVICE_KEY  (optional: SUPABASE_TABLE=app_state, SUPABASE_ROW=main)
+const SUPA = process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY
+  ? { url: process.env.SUPABASE_URL.trim().replace(/\/+$/, ''), key: process.env.SUPABASE_SERVICE_KEY.trim(), table: process.env.SUPABASE_TABLE || 'app_state', row: process.env.SUPABASE_ROW || 'main' }
+  : null;
+// naye Supabase "secret" keys (sb_secret_...) sirf apikey header mein jaate hain; purane service_role JWT dono mein
+const supaHeaders = () => SUPA.key.startsWith('sb_')
+  ? { apikey: SUPA.key, 'Content-Type': 'application/json' }
+  : { apikey: SUPA.key, Authorization: `Bearer ${SUPA.key}`, 'Content-Type': 'application/json' };
+const writeFileNow = () => { const tmp = DATA_FILE + '.tmp'; fs.writeFileSync(tmp, JSON.stringify(db, null, 2)); fs.renameSync(tmp, DATA_FILE); };
+
+async function loadDb() {
+  if (!SUPA) { try { return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); } catch { return DEFAULT_DATA(); } }
+  // load fail ho toh server start hi nahi hoga — taaki khaali data se asli data overwrite na ho
+  const r = await fetch(`${SUPA.url}/rest/v1/${SUPA.table}?id=eq.${encodeURIComponent(SUPA.row)}&select=data`, { headers: supaHeaders() });
+  if (!r.ok) throw new Error(`Supabase se data load nahi hua (HTTP ${r.status}): ${(await r.text()).slice(0, 300)}`);
+  const rows = await r.json();
+  return rows[0]?.data || DEFAULT_DATA();
+}
+
+let db = DEFAULT_DATA(); // boot() mein asli data aata hai
+let saveTimer = null, saving = null, dirty = false;
+function pushRemote() {
+  if (saving) { dirty = true; return saving; }
+  saving = (async () => {
+    do {
+      dirty = false;
+      try {
+        const r = await fetch(`${SUPA.url}/rest/v1/${SUPA.table}`, {
+          method: 'POST', headers: { ...supaHeaders(), Prefer: 'resolution=merge-duplicates,return=minimal' },
+          body: JSON.stringify({ id: SUPA.row, data: db, updated_at: new Date().toISOString() })
+        });
+        if (!r.ok) throw new Error(`HTTP ${r.status} ${(await r.text()).slice(0, 200)}`);
+      } catch (e) {
+        console.error('Supabase save fail, 5s baad dobara:', e.message);
+        dirty = true; await new Promise(res => setTimeout(res, 5000));
+      }
+    } while (dirty);
+  })().finally(() => { saving = null; });
+  return saving;
+}
 function save() {
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    const tmp = DATA_FILE + '.tmp';
-    fs.writeFileSync(tmp, JSON.stringify(db, null, 2));
-    fs.renameSync(tmp, DATA_FILE);
-  }, 100);
+  saveTimer = setTimeout(() => { if (SUPA) pushRemote(); else writeFileNow(); }, SUPA ? 300 : 100);
 }
-save();
+// band hote waqt (Render deploy/restart) bacha hua data save karke hi exit
+let exiting = false;
+async function flushAndExit() {
+  if (exiting) return; exiting = true;
+  clearTimeout(saveTimer);
+  try { if (SUPA) await Promise.race([pushRemote(), new Promise(r => setTimeout(r, 8000))]); else writeFileNow(); } catch {}
+  process.exit(0);
+}
+process.on('SIGTERM', flushAndExit);
+process.on('SIGINT', flushAndExit);
 
 // ---------- Helpers ----------
 const uid = (p = '') => p + crypto.randomBytes(6).toString('hex');
@@ -162,7 +205,9 @@ const SAMPLE_MENU = [
   ['Drinks', '🥤', 'Sweet Lassi', 90, 9, true], ['Drinks', '☕', 'Masala Chai', 40, 4, true],
   ['Desserts', '🍮', 'Gulab Jamun', 80, 8, true], ['Desserts', '🍨', 'Kesar Kulfi', 100, 15, true]
 ];
-if (!Array.isArray(db.menu)) db.menu = SAMPLE_MENU.map(([category, emoji, name, price, points, veg]) => ({ id: uid('m'), category, emoji, name, price, points, veg, active: true }));
+function migrateMenu() {
+  if (!Array.isArray(db.menu)) db.menu = SAMPLE_MENU.map(([category, emoji, name, price, points, veg]) => ({ id: uid('m'), category, emoji, name, price, points, veg, active: true }));
+}
 
 // order items [{id, qty}] → snapshot + totals
 function priceOrder(items) {
@@ -193,11 +238,12 @@ function makeStaff({ name, username, password, role }) {
   const salt = crypto.randomBytes(8).toString('hex');
   return { id: uid('st'), name, username: username.toLowerCase(), salt, passHash: hashPin(password, salt), role, active: true, createdAt: now() };
 }
-if (!Array.isArray(db.staff)) db.staff = [];
-if (!db.staff.length) db.staff.push({ ...makeStaff({ name: 'Owner', username: 'owner', password: db.settings.adminPin || '1234', role: 'owner' }), mustChange: true });
-delete db.settings.adminPin;
-if (Object.values(db.adminSessions || {}).some(v => typeof v !== 'object')) db.adminSessions = {};
-save();
+function migrateStaff() {
+  if (!Array.isArray(db.staff)) db.staff = [];
+  if (!db.staff.length) db.staff.push({ ...makeStaff({ name: 'Owner', username: 'owner', password: db.settings.adminPin || '1234', role: 'owner' }), mustChange: true });
+  delete db.settings.adminPin;
+  if (Object.values(db.adminSessions || {}).some(v => typeof v !== 'object')) db.adminSessions = {};
+}
 const publicStaff = s => ({ id: s.id, name: s.name, username: s.username, role: s.role, active: s.active, createdAt: s.createdAt, mustChange: !!s.mustChange });
 const OWNER_ONLY = new Set(['POST /api/admin/menu', 'POST /api/admin/config', 'POST /api/admin/adjust', 'GET /api/admin/staff', 'POST /api/admin/staff', 'POST /api/admin/staff/delete']);
 
@@ -522,7 +568,7 @@ const routes = {
   }
 };
 
-http.createServer(async (req, res) => {
+const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   const key = `${req.method} ${url.pathname}`;
   try {
@@ -545,10 +591,24 @@ http.createServer(async (req, res) => {
   } catch (e) {
     console.error(e); send(res, 500, { error: 'Server error' });
   }
-}).listen(PORT, '0.0.0.0', () => {
-  console.log(`\n🍽️  ${db.settings.restaurantName} Loyalty server chal raha hai!\n`);
-  console.log(`  Customer (is computer par): http://localhost:${PORT}`);
-  console.log(`  Admin    (is computer par): http://localhost:${PORT}/admin   (pehla login: owner / 1234, phir password badlein)`);
-  for (const u of lanUrls()) console.log(`  Same WiFi par phones ke liye: ${u}   |   Admin: ${u}/admin`);
-  console.log('');
 });
+
+// ---------- Boot: data load → migrations → server start ----------
+(async function boot() {
+  try { db = await loadDb(); }
+  catch (e) { console.error('\n❌ ' + e.message + '\n   SUPABASE_URL / SUPABASE_SERVICE_KEY aur app_state table check kijiye.\n'); process.exit(1); }
+  for (const k of ['customers', 'visits', 'redemptions', 'ledger']) if (!Array.isArray(db[k])) db[k] = [];
+  for (const k of ['sessions', 'adminSessions']) if (!db[k] || typeof db[k] !== 'object') db[k] = {};
+  if (!db.secret) db.secret = crypto.randomBytes(16).toString('hex');
+  if (!Array.isArray(db.rewards)) db.rewards = DEFAULT_DATA().rewards;
+  db.settings = { ...DEFAULT_DATA().settings, ...(db.settings || {}) };
+  migrateMenu(); migrateStaff(); save();
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(`\n🍽️  ${db.settings.restaurantName} Loyalty server chal raha hai! (storage: ${SUPA ? 'Supabase' : 'data.json'})\n`);
+    if (process.env.RENDER_EXTERNAL_URL) console.log(`  Live: ${process.env.RENDER_EXTERNAL_URL}   |   Admin: ${process.env.RENDER_EXTERNAL_URL}/admin`);
+    console.log(`  Customer (is computer par): http://localhost:${PORT}`);
+    console.log(`  Admin    (is computer par): http://localhost:${PORT}/admin   (pehla login: owner / 1234, phir password badlein)`);
+    for (const u of lanUrls()) console.log(`  Same WiFi par phones ke liye: ${u}   |   Admin: ${u}/admin`);
+    console.log('');
+  });
+})();

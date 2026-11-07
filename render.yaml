@@ -1,0 +1,16 @@
+# Render Blueprint: Render dashboard → New → Blueprint → is repo ko chuniye
+services:
+  - type: web
+    name: or-menu
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /api/public
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: SUPABASE_URL          # Supabase → Project Settings → API → Project URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY  # Supabase → Project Settings → API Keys → secret (ya service_role) key
+        sync: false
