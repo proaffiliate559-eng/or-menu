@@ -695,8 +695,9 @@ async function vercelHandleOne(req, res) {
     if (pathname === '/healthz') return send(res, 200, { ok: true, storage: SUPA ? 'supabase' : 'none', host: 'vercel', setupError: setupError ? setupError.title : null });
     if (!SUPA) return setupPage(res, pathname.startsWith('/api/'));
     if (!pathname.startsWith('/api/')) {
-      // backup: agar koi page request function tak aa jaye toh file khud bhejo
-      if (pathname === '/' || pathname === '/index.html') return serveStatic(res, 'index.html');
+      // backup: agar koi page request function tak aa jaye toh static file par bhej do (query jaise ?t= / ?ref= saath)
+      if (pathname === '/') { res.writeHead(302, { Location: '/index.html' + url.search, 'Cache-Control': 'no-store' }); return res.end(); }
+      if (pathname === '/index.html') return serveStatic(res, 'index.html');
       if (pathname === '/admin' || pathname === '/admin.html') return serveStatic(res, 'admin.html');
       if (pathname === '/favicon.ico') return serveStatic(res, 'favicon.svg');
       return serveStatic(res, pathname.slice(1));
