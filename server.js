@@ -47,8 +47,20 @@ const DEFAULT_DATA = () => ({
 // Supabase set ho toh poora data ek jsonb row mein save hota hai (REST API, koi npm package nahi).
 // Env: SUPABASE_URL, SUPABASE_SERVICE_KEY  (optional: SUPABASE_TABLE=app_state, SUPABASE_ROW=main)
 const SUPA = process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY
-  ? { url: process.env.SUPABASE_URL.trim().replace(/\/+$/, ''), key: process.env.SUPABASE_SERVICE_KEY.trim(), table: process.env.SUPABASE_TABLE || 'app_state', row: process.env.SUPABASE_ROW || 'main' }
+  ? {
+      // galti se "/rest/v1" ya aakhri "/" laga ho toh hata do; quotes/spaces bhi
+      url: process.env.SUPABASE_URL.trim().replace(/^["']|["']$/g, '').replace(/\/+$/, '').replace(/\/rest\/v1$/i, ''),
+      key: process.env.SUPABASE_SERVICE_KEY.trim().replace(/^["']|["']$/g, '').replace(/^Bearer\s+/i, ''),
+      table: process.env.SUPABASE_TABLE || 'app_state', row: process.env.SUPABASE_ROW || 'main'
+    }
   : null;
+// anon / publishable key server ke liye nahi chalti — pehle hi pakdo
+function keyProblem(k) {
+  if (/^sb_publishable_/.test(k)) return 'Ye publishable key hai (sb_publishable_...)';
+  const parts = k.split('.');
+  if (parts.length === 3) { try { const role = JSON.parse(Buffer.from(parts[1], 'base64url').toString()).role; if (role === 'anon') return 'Ye anon key hai (role: anon)'; } catch {} }
+  return null;
+}
 // naye Supabase "secret" keys (sb_secret_...) sirf apikey header mein jaate hain; purane service_role JWT dono mein
 const supaHeaders = () => SUPA.key.startsWith('sb_')
   ? { apikey: SUPA.key, 'Content-Type': 'application/json' }
@@ -57,7 +69,8 @@ const writeFileNow = () => { const tmp = DATA_FILE + '.tmp'; fs.writeFileSync(tm
 
 async function loadDb() {
   if (!SUPA) { try { return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); } catch { return DEFAULT_DATA(); } }
-  // load fail ho toh server start hi nahi hoga — taaki khaali data se asli data overwrite na ho
+  // load fail ho toh setup-error mode — khaali data se asli data kabhi overwrite nahi hoga
+  const kp = keyProblem(SUPA.key); if (kp) throw new Error(kp);
   const r = await fetch(`${SUPA.url}/rest/v1/${SUPA.table}?id=eq.${encodeURIComponent(SUPA.row)}&select=data`, { headers: supaHeaders() });
   if (!r.ok) throw new Error(`Supabase se data load nahi hua (HTTP ${r.status}): ${(await r.text()).slice(0, 300)}`);
   const rows = await r.json();
@@ -86,6 +99,7 @@ function pushRemote() {
   return saving;
 }
 function save() {
+  if (setupError) return; // data load hi nahi hua — kuch save mat karo (asli data safe)
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => { if (SUPA) pushRemote(); else writeFileNow(); }, SUPA ? 300 : 100);
 }
@@ -568,10 +582,34 @@ const routes = {
   }
 };
 
+// ---------- Setup-error mode: Supabase gadbad ho toh crash nahi, saaf page dikhao ----------
+let setupError = null; // { title, fix, detail }
+function diagnose(e) {
+  const m = String(e && e.message || e);
+  if (/publishable|anon/i.test(m)) return { title: 'Galat Supabase key', fix: 'Render → Environment mein SUPABASE_SERVICE_KEY ko Supabase ki <b>secret</b> key (sb_secret_...) ya <b>service_role</b> key se badliye. <b>anon/publishable</b> key kaam nahi karegi.', detail: m };
+  if (/PGRST205|Could not find the table|relation .* does not exist|HTTP 404/i.test(m)) return { title: 'Supabase mein table nahi mili', fix: 'Supabase → <b>SQL Editor</b> kholiye, repo ki <code>supabase/schema.sql</code> paste karke <b>Run</b> kijiye. 30 second mein app apne aap chalu ho jayega.', detail: m };
+  if (/HTTP 401|HTTP 403|Invalid API key|JWT/i.test(m)) return { title: 'Supabase key galat hai', fix: 'Render → Environment mein <b>SUPABASE_SERVICE_KEY</b> dobara copy-paste kijiye (Supabase → Project Settings → API Keys → secret / service_role). Aage-peeche space na ho.', detail: m };
+  if (/fetch failed|ENOTFOUND|getaddrinfo|Invalid URL|ECONNREFUSED/i.test(m)) return { title: 'SUPABASE_URL galat hai', fix: 'Render → Environment mein <b>SUPABASE_URL</b> sirf itna hona chahiye: <code>https://&lt;project-id&gt;.supabase.co</code> (Supabase → Project Settings → API → Project URL).', detail: m };
+  return { title: 'Supabase se connect nahi ho paaya', fix: 'SUPABASE_URL, SUPABASE_SERVICE_KEY aur app_state table check kijiye.', detail: m };
+}
+function setupPage(res, api) {
+  if (api) return send(res, 503, { error: 'Setup adhoora: ' + setupError.title });
+  res.writeHead(503, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Retry-After': '30' });
+  res.end(`<!doctype html><html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="30"><title>Setup baaki hai</title>
+<style>body{margin:0;font-family:system-ui,sans-serif;background:#f7f3ee;color:#1f1611;display:grid;place-items:center;min-height:100vh;padding:16px}
+.c{max-width:520px;background:#fff;border:1px solid #e8ddd1;border-radius:20px;padding:24px;box-shadow:0 6px 20px rgba(40,20,5,.08)}
+h1{font-size:20px;margin:8px 0}.t{display:inline-block;background:#fbe9e6;color:#b3261e;font-weight:800;font-size:12px;padding:4px 10px;border-radius:99px}
+p{line-height:1.55}code{background:#f1ebe3;padding:2px 6px;border-radius:6px}.d{font-size:12px;color:#8b7d72;word-break:break-all;background:#f7f3ee;padding:10px;border-radius:10px}
+@media(prefers-color-scheme:dark){body{background:#14100d;color:#f6efe8}.c{background:#1e1915;border-color:#342b25}code,.d{background:#29221d}}</style></head>
+<body><div class="c"><span class="t">⚙️ Setup baaki hai</span><h1>${setupError.title}</h1><p>${setupError.fix}</p><p class="d">Technical detail: ${String(setupError.detail).replace(/[<>&]/g, '')}</p><p style="font-size:13px;color:#8b7d72">Ye page har 30 second mein khud refresh hota hai. Theek hote hi app khul jayega. Aapka koi data nahi mita hai.</p></div></body></html>`);
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   const key = `${req.method} ${url.pathname}`;
   try {
+    if (url.pathname === '/healthz') return send(res, 200, { ok: true, storage: SUPA ? 'supabase' : 'file', setupError: setupError ? setupError.title : null });
+    if (setupError) return setupPage(res, url.pathname.startsWith('/api/'));
     if (url.pathname.startsWith('/api/')) {
       const h = routes[key];
       if (!h) return send(res, 404, { error: 'Not found' });
@@ -594,15 +632,29 @@ const server = http.createServer(async (req, res) => {
 });
 
 // ---------- Boot: data load → migrations → server start ----------
-(async function boot() {
-  try { db = await loadDb(); }
-  catch (e) { console.error('\n❌ ' + e.message + '\n   SUPABASE_URL / SUPABASE_SERVICE_KEY aur app_state table check kijiye.\n'); process.exit(1); }
+function prepareDb(loaded) {
+  db = loaded;
   for (const k of ['customers', 'visits', 'redemptions', 'ledger']) if (!Array.isArray(db[k])) db[k] = [];
   for (const k of ['sessions', 'adminSessions']) if (!db[k] || typeof db[k] !== 'object') db[k] = {};
   if (!db.secret) db.secret = crypto.randomBytes(16).toString('hex');
   if (!Array.isArray(db.rewards)) db.rewards = DEFAULT_DATA().rewards;
   db.settings = { ...DEFAULT_DATA().settings, ...(db.settings || {}) };
   migrateMenu(); migrateStaff(); save();
+}
+async function tryLoad() {
+  try {
+    const loaded = await loadDb();
+    const wasBroken = !!setupError;
+    setupError = null;          // pehle clear, taaki prepareDb ka save() chale
+    prepareDb(loaded);
+    if (wasBroken) console.log('✅ Supabase connect ho gaya, app chalu.');
+    return true;
+  }
+  catch (e) { setupError = diagnose(e); console.error('\n❌ ' + setupError.title + ' — ' + e.message + '\n   30 second baad dobara koshish...\n'); return false; }
+}
+(async function boot() {
+  // Supabase fail ho toh bhi server chalu rahe (setup page + /healthz), aur 30s mein dobara koshish
+  if (!(await tryLoad())) { const t = setInterval(async () => { if (await tryLoad()) clearInterval(t); }, 30000); }
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🍽️  ${db.settings.restaurantName} Loyalty server chal raha hai! (storage: ${SUPA ? 'Supabase' : 'data.json'})\n`);
     if (process.env.RENDER_EXTERNAL_URL) console.log(`  Live: ${process.env.RENDER_EXTERNAL_URL}   |   Admin: ${process.env.RENDER_EXTERNAL_URL}/admin`);
