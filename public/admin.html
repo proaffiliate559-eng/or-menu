@@ -1,0 +1,868 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Filmujha Admin</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ---------- Layout ---------- */
+  .shell { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  aside { background: var(--surface); border-right: 1px solid var(--line); padding: 20px 14px; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 4px; }
+  .logo { display: flex; align-items: center; gap: 10px; padding: 4px 8px 20px; }
+  .logo .mark { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, var(--brand), var(--accent)); display: grid; place-items: center; font-size: 20px; }
+  .logo b { display: block; font-size: 16px; }
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 12px; border: 0; background: none; cursor: pointer; font-weight: 600; color: var(--ink-2); text-align: left; width: 100%; }
+  .nav-item:hover { background: var(--surface-2); }
+  .nav-item.on { background: var(--brand-soft); color: var(--brand); }
+  .nav-item .i { font-size: 18px; width: 22px; text-align: center; }
+  .nav-item .badge { margin-left: auto; background: var(--brand); color: #fff; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 99px; }
+  .side-foot { margin-top: auto; display: flex; gap: 8px; }
+  main { padding: 26px 28px 60px; min-width: 0; }
+  .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .page-head h1 { font-size: 26px; }
+
+  @media (max-width: 860px) {
+    .shell { grid-template-columns: 1fr; }
+    aside { position: sticky; top: 0; height: auto; flex-direction: row; overflow-x: auto; padding: 10px 12px; z-index: 20; border-right: 0; border-bottom: 1px solid var(--line); gap: 6px; scrollbar-width: none; }
+    .logo, .side-foot .lbl { display: none; }
+    .nav-item { width: auto; white-space: nowrap; padding: 9px 12px; }
+    .side-foot { margin: 0 0 0 auto; }
+    main { padding: 18px 16px 60px; }
+  }
+
+  /* ---------- KPIs ---------- */
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 18px; }
+  .kpi { display: flex; gap: 14px; align-items: center; }
+  .kpi .ic { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; font-size: 22px; flex: 0 0 auto; }
+  .kpi b { display: block; font-size: 24px; font-weight: 800; letter-spacing: -.02em; }
+  .grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 1050px) { .grid { grid-template-columns: 1fr; } }
+  .card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; gap: 10px; }
+
+  /* ---------- Pending ---------- */
+  .prow { display: flex; gap: 12px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .prow:last-child { border-bottom: 0; }
+  .prow .who { flex: 1 1 170px; min-width: 0; }
+  .prow .who b { display: block; }
+  .prow.new { animation: flash 2.4s; border-radius: 12px; }
+  @keyframes flash { 0%, 40% { background: var(--ok-soft); box-shadow: 0 0 0 8px var(--ok-soft); } }
+  .money { position: relative; flex: 0 0 130px; }
+  .money span { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-weight: 700; }
+  .money input { padding: 10px 10px 10px 26px; font-weight: 700; }
+  .empty { text-align: center; padding: 30px 10px; color: var(--muted); }
+  .empty .big { font-size: 42px; margin-bottom: 6px; }
+
+  .lrow { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .lrow:last-child { border-bottom: 0; }
+  .lrow .avatar { width: 34px; height: 34px; font-size: 12px; }
+  .lrow .tx { flex: 1; min-width: 0; }
+  .rank { width: 26px; text-align: center; font-size: 18px; }
+
+  /* ---------- QR ---------- */
+  .qr-wrap { display: grid; grid-template-columns: auto 1fr; gap: 28px; align-items: center; }
+  @media (max-width: 760px) { .qr-wrap { grid-template-columns: 1fr; text-align: center; } }
+  .qrframe { background: #fff; padding: 18px; border-radius: 24px; box-shadow: var(--shadow); display: inline-grid; place-items: center; position: relative; }
+  .qrframe img, .qrframe canvas { width: 260px !important; height: 260px !important; }
+  .ring { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+  @media (max-width: 760px) { .ring { justify-content: center; } }
+  .ring svg { transform: rotate(-90deg); }
+  .steps { display: grid; gap: 12px; margin-top: 16px; text-align: left; }
+  .steps div { display: flex; gap: 12px; align-items: center; }
+  .steps i { font-style: normal; width: 30px; height: 30px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); display: grid; place-items: center; font-weight: 800; flex: 0 0 auto; }
+
+  .kiosk { position: fixed; inset: 0; z-index: 120; background: radial-gradient(90% 70% at 100% 0%, #f29d38 0%, transparent 60%), linear-gradient(160deg, #b3261e, #5e0f0b); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; gap: 18px; }
+  .kiosk h1 { font-size: clamp(28px, 5vw, 48px); font-weight: 800; }
+  .kiosk p { font-size: clamp(16px, 2.2vw, 22px); opacity: .92; }
+  .kiosk .qrframe { padding: 22px; border-radius: 30px; }
+  .kiosk .qrframe img, .kiosk .qrframe canvas { width: min(56vh, 70vw) !important; height: min(56vh, 70vw) !important; }
+  .kiosk .perks { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .kiosk .perks span { background: rgba(255,255,255,.16); padding: 8px 16px; border-radius: 99px; font-weight: 600; }
+  .kiosk .close { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,.18); color: #fff; }
+
+  /* ---------- Verify ---------- */
+  .verify { display: grid; grid-template-columns: 380px 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 860px) { .verify { grid-template-columns: 1fr; } }
+  .digits { display: flex; gap: 8px; justify-content: center; margin: 16px 0; }
+  .digits span { width: 48px; height: 60px; border-radius: 14px; border: 2px solid var(--line); display: grid; place-items: center; font-size: 28px; font-weight: 800; background: var(--surface-2); transition: border-color .15s; }
+  .digits span.f { border-color: var(--brand); color: var(--brand); background: var(--surface); }
+  .digits.bad span { border-color: var(--danger); animation: shake .35s; }
+  @keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+  .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .keypad button { padding: 16px; font-size: 22px; font-weight: 700; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; }
+  .keypad button:active { background: var(--surface-2); transform: scale(.97); }
+  .vresult { text-align: center; padding: 30px 20px; }
+  .vresult .big { font-size: 64px; }
+
+  /* ---------- Customers ---------- */
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
+  .toolbar input { flex: 1 1 240px; }
+  .filters { display: flex; gap: 6px; }
+  .filters button { border: 1px solid var(--line); background: var(--surface); padding: 8px 14px; border-radius: 99px; font-weight: 600; cursor: pointer; font-size: 13px; }
+  .filters button.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .tablewrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 12px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  tr:hover td { background: var(--surface-2); }
+  .cust { display: flex; gap: 10px; align-items: center; }
+  .cust .avatar { width: 34px; height: 34px; font-size: 12px; }
+  .num { font-variant-numeric: tabular-nums; font-weight: 700; }
+
+  /* ---------- Settings ---------- */
+  .sgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 960px) { .sgrid { grid-template-columns: 1fr; } }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .rw { display: grid; grid-template-columns: 54px 1fr 96px auto 40px; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .rw .emo { text-align: center; font-size: 22px; padding: 8px; }
+  .switch { position: relative; width: 42px; height: 24px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch span { position: absolute; inset: 0; background: var(--line); border-radius: 99px; cursor: pointer; transition: .2s; }
+  .switch span::before { content: ""; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .switch input:checked + span { background: var(--ok); }
+  .switch input:checked + span::before { transform: translateX(18px); }
+  .savebar { position: sticky; bottom: 16px; display: flex; justify-content: flex-end; margin-top: 18px; }
+  .savebar .btn { box-shadow: var(--shadow-lg); }
+
+  /* ---------- Login ---------- */
+  .login { min-height: 100vh; display: grid; place-items: center; padding: 20px; background: radial-gradient(80% 60% at 100% 0%, rgba(242,157,56,.25), transparent), var(--bg); }
+  .login .card { width: 100%; max-width: 380px; padding: 28px; text-align: center; }
+  .login .mark { width: 64px; height: 64px; border-radius: 20px; background: linear-gradient(135deg, var(--brand), var(--accent)); display: grid; place-items: center; font-size: 30px; margin: 0 auto 14px; }
+  /* ---------- Live order board ---------- */
+  .live { padding: 20px; margin-bottom: 18px; }
+  .live-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; }
+  .live-dot { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; letter-spacing: .08em; color: var(--danger); background: var(--danger-soft); padding: 4px 10px 4px 8px; border-radius: 99px; }
+  .live-dot::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: pulse 1.6s infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(198,40,40,.5); } 70% { box-shadow: 0 0 0 8px rgba(198,40,40,0); } 100% { box-shadow: 0 0 0 0 rgba(198,40,40,0); } }
+  .live-filter button { white-space: nowrap; font-size: 13px; padding: 8px 12px; }
+  .live-filter button span { display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 4px; border-radius: 99px; background: var(--line); font-size: 11px; }
+  .live-filter button.on span { background: var(--brand-soft); color: var(--brand); }
+  .live-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 18px 0; }
+  @media (max-width: 760px) { .live-stats { grid-template-columns: repeat(2, 1fr); } }
+  .lstat { background: var(--surface-2); border-radius: 14px; padding: 12px 14px; }
+  .lstat span { font-size: 12px; color: var(--muted); font-weight: 600; }
+  .lstat b { display: block; font-size: 22px; font-weight: 800; letter-spacing: -.02em; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .tickets { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+  .ticket { position: relative; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; transition: box-shadow .2s, transform .2s; }
+  .ticket:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+  .ticket::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--line); }
+  .ticket.has-order::before { background: var(--accent); }
+  .ticket.late::before { background: var(--danger); }
+  .ticket.new { animation: flash 2.4s; }
+  .ticket .new-tag { position: absolute; top: 12px; right: 12px; background: var(--ok); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .06em; padding: 3px 8px; border-radius: 99px; }
+  .t-head { display: flex; gap: 12px; align-items: center; padding: 16px 16px 12px 20px; }
+  .t-head .nm { flex: 1; min-width: 0; }
+  .t-head .nm b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .timer { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px; font-weight: 800; font-size: 12px; padding: 4px 10px; border-radius: 99px; font-variant-numeric: tabular-nums; }
+  .timer.ok { background: var(--ok-soft); color: var(--ok); }
+  .timer.warn { background: rgba(224,165,38,.18); color: #9a6200; }
+  .timer.bad { background: var(--danger-soft); color: var(--danger); }
+  .t-status { margin: 0 16px 0 20px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; font-weight: 700; }
+  .t-status .st { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; }
+  .st.order { background: rgba(242,157,56,.16); color: #9a5200; }
+  .st.wait { background: var(--surface-2); color: var(--muted); }
+  .t-items { margin: 12px 16px 0 20px; padding: 10px 0; border-top: 1px dashed var(--line); border-bottom: 1px dashed var(--line); font-size: 14px; flex: 1; }
+  .t-items .it { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; }
+  .t-items .it .q { display: inline-block; min-width: 26px; font-weight: 800; color: var(--brand); }
+  .t-items .more { font-size: 12px; color: var(--muted); padding-top: 4px; }
+  .t-empty { margin: 12px 16px 0 20px; padding: 14px; border: 1.5px dashed var(--line); border-radius: 12px; text-align: center; color: var(--muted); font-size: 13px; flex: 1; display: grid; place-items: center; }
+  .t-total { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px 0 20px; }
+  .t-total b { font-size: 18px; font-weight: 800; }
+  .t-total .pts { font-weight: 800; color: var(--ok); background: var(--ok-soft); padding: 4px 10px; border-radius: 99px; font-size: 13px; }
+  .t-actions { display: flex; gap: 8px; padding: 14px 16px 16px 20px; }
+  .t-actions .btn { flex: 1; }
+  .t-actions .icon-btn { width: 42px; height: 42px; border-radius: 12px; font-size: 15px; }
+  .live-empty { grid-column: 1 / -1; text-align: center; padding: 40px 20px; border: 1.5px dashed var(--line); border-radius: 18px; color: var(--muted); }
+  .live-empty .big { font-size: 46px; margin-bottom: 8px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+  .osum { margin-top: 8px; background: var(--surface-2); border-radius: 12px; padding: 8px 10px; font-size: 13px; white-space: normal; }
+  .otag { display: inline-block; font-size: 11px; font-weight: 800; color: #8a5a00; background: #fdf1d3; padding: 2px 8px; border-radius: 99px; margin-bottom: 4px; }
+  .pickrow { display: flex; gap: 10px; align-items: center; padding: 8px; border-radius: 12px; }
+  .pickrow.on { background: var(--ok-soft); }
+  .stepper { display: flex; align-items: center; border-radius: 10px; overflow: hidden; border: 1.5px solid var(--brand); flex: 0 0 auto; }
+  .stepper button { width: 32px; height: 32px; border: 0; background: var(--surface); color: var(--brand); font-size: 17px; font-weight: 800; cursor: pointer; }
+  .stepper span { min-width: 26px; text-align: center; font-weight: 800; color: var(--brand); }
+  .picktotal { display: flex; justify-content: space-between; align-items: center; padding: 12px 2px; border-top: 1px solid var(--line); margin-top: 8px; }
+  .mrow { display: grid; grid-template-columns: 50px 1.6fr 1fr 90px 80px 60px 60px 36px; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); min-width: 760px; }
+  .mrow .emo { text-align: center; font-size: 20px; padding: 8px; }
+  .mrow input { padding: 9px 10px; }
+  .vegbtn { border: 1.5px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 4px; cursor: pointer; font-size: 12px; font-weight: 700; }
+  .me { display: flex; gap: 10px; align-items: center; padding: 12px; border-radius: 14px; background: var(--surface-2); margin-bottom: 10px; }
+  .me .avatar { width: 36px; height: 36px; font-size: 13px; }
+  .me b { display: block; font-size: 14px; }
+  .chip.owner { background: #fdf1d3; color: #8a5a00; } .chip.staff { background: #e3f4ec; color: #1f6b48; }
+  .chip.off { background: var(--danger-soft); color: var(--danger); }
+  .by { font-size: 11px; color: var(--muted); }
+  .side-bottom { margin-top: auto; }
+  @media (max-width: 860px) { .me { display: none; } .side-bottom { margin: 0 0 0 auto; } }
+</style>
+</head>
+<body>
+
+<section id="loginView" class="login hidden">
+  <div class="card">
+    <div class="mark">🔐</div>
+    <h1 id="lgName">Staff Login</h1>
+    <p class="muted" style="margin-top:6px">Sirf restaurant staff aur owner ke liye</p>
+    <form onsubmit="doLogin(event)" style="text-align:left">
+      <label>Username</label><input id="lgUser" autocomplete="username" autocapitalize="none" required autofocus placeholder="jaise: owner">
+      <label>Password</label><input id="lgPass" type="password" autocomplete="current-password" required placeholder="••••••">
+      <button class="btn block" style="margin-top:18px">Login</button>
+    </form>
+    <div class="err" id="loginErr"></div>
+    <p class="muted" style="margin-top:4px">Pehli baar: <b>owner</b> / <b>1234</b>. Login ke baad password zaroor badlein.</p>
+    <p class="muted" style="margin-top:14px">Customer hain? <a href="/" style="color:var(--brand);font-weight:700">Rewards page par jaiye →</a></p>
+  </div>
+</section>
+
+<div id="appView" class="shell hidden">
+  <aside>
+    <div class="logo"><div class="mark">🍽️</div><div><b id="rName">Filmujha</b><span class="muted">Loyalty Admin</span></div></div>
+    <button class="nav-item on" data-tab="dash"><span class="i">📊</span>Dashboard<span class="badge hidden" id="pendBadge">0</span></button>
+    <button class="nav-item" data-tab="qr"><span class="i">📱</span>Counter QR</button>
+    <button class="nav-item" data-tab="verify"><span class="i">✅</span>Redeem verify</button>
+    <button class="nav-item" data-tab="cust"><span class="i">👥</span>Customers</button>
+    <button class="nav-item owner-only" data-tab="menu"><span class="i">🍛</span>Menu &amp; points</button>
+    <button class="nav-item owner-only" data-tab="staff"><span class="i">👨‍🍳</span>Staff</button>
+    <button class="nav-item owner-only" data-tab="settings"><span class="i">⚙️</span>Settings</button>
+    <div class="side-bottom">
+      <div class="me"><div class="avatar" id="meAv">O</div><div style="min-width:0"><b id="meName">Owner</b><span class="chip" id="meRole">owner</span></div></div>
+      <div class="side-foot">
+        <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Theme">🌙</button>
+        <button class="icon-btn" id="soundBtn" onclick="toggleSound()" title="New check-in sound">🔔</button>
+        <button class="icon-btn" onclick="changePassword()" title="Password badlein">🔑</button>
+        <button class="icon-btn" onclick="logout()" title="Logout">⎋</button>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+    <!-- DASHBOARD -->
+    <section id="tab-dash">
+      <div class="page-head"><div><span class="muted" id="today"></span><h1>Aaj ka overview</h1></div><button class="btn" onclick="showTab('qr')">📱 Counter QR kholein</button></div>
+      <div class="kpis" id="kpis"></div>
+      <div class="card live">
+        <div class="live-head">
+          <div>
+            <div style="display:flex;align-items:center;gap:10px"><span class="live-dot">LIVE</span><h2>Restaurant mein abhi</h2><span class="chip" id="pendCount">0</span></div>
+            <p class="muted" style="margin-top:4px">Order check karke confirm kijiye, har dish ke fix points apne aap customer ko mil jayenge · <span id="liveUpdated">abhi update hua</span></p>
+          </div>
+          <div class="seg live-filter" id="liveFilter">
+            <button data-f="all" class="on">Sab <span id="fAll">0</span></button>
+            <button data-f="order">🛎️ Order aaya <span id="fOrder">0</span></button>
+            <button data-f="wait">⏳ Order baaki <span id="fWait">0</span></button>
+          </div>
+        </div>
+        <div class="live-stats" id="liveStats"></div>
+        <div class="tickets" id="pending"></div>
+      </div>
+
+      <div class="grid2">
+        <div class="card"><div class="card-head"><h2>🍛 Aaj ki top dishes</h2></div><div id="topDishes"></div></div>
+        <div class="card"><div class="card-head"><h2>🏆 Top customers</h2><button class="link" onclick="showTab('cust')">Sab →</button></div><div id="top"></div></div>
+      </div>
+    </section>
+
+    <!-- QR -->
+    <section id="tab-qr" class="hidden">
+      <div class="page-head"><div><h1>Counter QR</h1><p class="muted">Ye QR har 60 second mein badalta hai, isliye photo leke ghar se scan nahi ho sakta.</p></div>
+        <button class="btn" onclick="openKiosk()">⛶ Kiosk mode (full screen)</button></div>
+      <div class="card qr-wrap">
+        <div>
+          <div class="qrframe" id="qrBox"></div>
+          <div class="ring"><svg width="34" height="34"><circle cx="17" cy="17" r="14" fill="none" stroke="var(--line)" stroke-width="4"/><circle id="ringArc" cx="17" cy="17" r="14" fill="none" stroke="var(--brand)" stroke-width="4" stroke-linecap="round" stroke-dasharray="88" stroke-dashoffset="0"/></svg><span class="muted" id="qrCount">…</span></div>
+        </div>
+        <div>
+          <h2>Scan karein aur rewards paaiye 🎁</h2>
+          <div class="steps">
+            <div><i>1</i><span>Customer phone camera se QR scan kare</span></div>
+            <div><i>2</i><span>Join ya login kare, visit + stamp record hoga</span></div>
+            <div><i>3</i><span>Dashboard par bill amount daaliye, points add ho jayenge</span></div>
+          </div>
+          <div class="card" style="margin-top:18px;background:var(--surface-2);box-shadow:none">
+            <b>📶 Network</b><p class="muted" style="margin-top:4px">Customer ka phone aur ye computer same WiFi par hone chahiye.</p>
+            <p class="muted" id="lanList" style="margin-top:6px;word-break:break-all"></p>
+            <p class="muted" style="margin-top:6px">Test link: <a id="qrLink" target="_blank" style="color:var(--brand);word-break:break-all"></a></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VERIFY -->
+    <section id="tab-verify" class="hidden">
+      <div class="page-head"><div><h1>Redeem verify</h1><p class="muted">Customer ke phone par dikh raha 6-digit code daaliye</p></div></div>
+      <div class="verify">
+        <div class="card">
+          <div class="digits" id="digits"></div>
+          <div class="keypad" id="keypad"></div>
+        </div>
+        <div class="card" id="verifyOut"><div class="vresult"><div class="big">🎟️</div><h2>Code ka intezaar</h2><p class="muted" style="margin-top:6px">Keypad ya keyboard se code type kijiye. 6 digit hote hi apne aap check hoga.</p></div></div>
+      </div>
+    </section>
+
+    <!-- CUSTOMERS -->
+    <section id="tab-cust" class="hidden">
+      <div class="page-head"><div><h1>Customers</h1><p class="muted" id="custCount"></p></div></div>
+      <div class="card">
+        <div class="toolbar">
+          <input id="search" placeholder="🔎  Naam ya mobile se dhoondhiye" oninput="renderCustomers()">
+          <div class="filters" id="filters">
+            <button class="on" data-f="">Sab</button><button data-f="Silver">Silver</button><button data-f="Gold">Gold</button><button data-f="Platinum">Platinum</button>
+          </div>
+        </div>
+        <div class="tablewrap"><table>
+          <thead><tr><th>Customer</th><th>Tier</th><th>Points</th><th>Lifetime</th><th>Visits</th><th>Stamps</th><th>Birthday</th><th>Joined</th><th></th></tr></thead>
+          <tbody id="custBody"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- MENU -->
+    <section id="tab-menu" class="hidden">
+      <div class="page-head"><div><h1>Menu &amp; points</h1><p class="muted">Har dish ka price aur uske <b>fix points</b> set kijiye. Customer jo order karega, utne points apne aap milenge.</p></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" onclick="autoPoints()">⚡ Sab ke points = price ka 10%</button><button class="btn ghost" onclick="addMenuRow()">+ Dish jodein</button></div></div>
+      <div class="card">
+        <div class="tablewrap">
+          <div class="mrow muted" style="font-size:11px;font-weight:700;text-transform:uppercase;border:0"><span>Icon</span><span>Dish</span><span>Category</span><span>Price ₹</span><span>Points</span><span>Type</span><span>On</span><span></span></div>
+          <div id="menuRows"></div>
+        </div>
+        <p class="muted" style="margin-top:12px">💡 Tip: jo dish zyada bechni hai (jaise naya dessert), uske points zyada rakhiye. Customer use order karne ke liye motivate hoga.<br>Gold customer ko 1.25x aur Platinum ko 1.5x points milte hain. Double Points Day par 2x.</p>
+      </div>
+      <div class="savebar"><button class="btn" onclick="saveMenu()">💾 Menu save karein</button></div>
+    </section>
+
+    <!-- STAFF -->
+    <section id="tab-staff" class="hidden">
+      <div class="page-head"><div><h1>Staff accounts</h1><p class="muted">Har staff ka apna login. Har bill aur redeem par record hota hai ki kisne kiya.</p></div>
+        <button class="btn" onclick="editStaff()">+ Naya staff</button></div>
+      <div class="card">
+        <div class="tablewrap"><table>
+          <thead><tr><th>Naam</th><th>Username</th><th>Role</th><th>Status</th><th>Banaya</th><th></th></tr></thead>
+          <tbody id="staffBody"></tbody></table></div>
+      </div>
+      <div class="card" style="margin-top:18px;background:var(--surface-2);box-shadow:none">
+        <b>Kaun kya kar sakta hai?</b>
+        <div class="two" style="margin-top:10px;font-size:14px">
+          <div><span class="chip owner">👑 Owner</span><p class="muted" style="margin-top:6px">Sab kuch: bill, QR, redeem, customers, points adjust, settings, rewards menu, staff accounts</p></div>
+          <div><span class="chip staff">👨‍🍳 Staff</span><p class="muted" style="margin-top:6px">Daily kaam: bill entry, counter QR, redeem verify, customer list dekhna</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="tab-settings" class="hidden">
+      <div class="page-head"><div><h1>Settings</h1><p class="muted">Loyalty program ke rules aur rewards</p></div></div>
+      <div class="sgrid">
+        <div style="display:grid;gap:18px">
+          <div class="card">
+            <h2>🪙 Earning rules</h2>
+            <label>Restaurant naam</label><input id="s_restaurantName">
+            <label>Points kaise milte hain</label>
+            <p class="hint" style="margin:0">Har dish ke fix points <a class="link" onclick="showTab('menu')">🍛 Menu &amp; points</a> tab mein set kijiye.</p>
+            <label>Check-in gap (ghante)</label><input id="s_checkinCooldownHours" type="number" min="0">
+            <label>Double Points Day</label>
+            <select id="s_doublePointsDay"><option value="-1">Off</option><option value="0">Sunday</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option></select>
+            <p class="hint">Slow din par customers laane ke liye</p>
+            <label>Tiers</label>
+            <p class="hint" style="margin:0">Silver (0+) → <span class="chip Gold">Gold 500+ · 1.25x</span> → <span class="chip Platinum">Platinum 1500+ · 1.5x</span></p>
+          </div>
+          <div class="card">
+            <h2>🎁 Bonuses &amp; stamp card</h2>
+            <div class="two">
+              <div><label>Welcome bonus</label><input id="s_welcomeBonus" type="number" min="0"></div>
+              <div><label>Referral bonus (dono ko)</label><input id="s_referralBonus" type="number" min="0"></div>
+            </div>
+            <div class="two">
+              <div><label>Stamp card target</label><input id="s_stampTarget" type="number" min="1"></div>
+              <div><label>Stamp card reward</label><input id="s_stampReward"></div>
+            </div>
+          </div>
+          <div class="card">
+            <h2>🔐 Security &amp; network</h2>
+            <label>Public URL <span class="muted">(optional)</span></label><input id="s_publicUrl" placeholder="https://rewards.filmujha.com">
+            <p class="hint">Online deploy ke baad daaliye, QR isi link ka banega</p>
+            <p class="hint" style="margin-top:12px">Staff ke login accounts <a class="link" onclick="showTab('staff')">👨‍🍳 Staff</a> tab mein manage karein.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>🍽️ Rewards menu</h2><button class="btn sm ghost" onclick="addRewardRow()">+ Reward jodein</button></div>
+          <div class="rw muted" style="font-size:11px;font-weight:700;text-transform:uppercase;border:0"><span>Icon</span><span>Reward</span><span>Points</span><span>On</span><span></span></div>
+          <div id="rewardRows"></div>
+        </div>
+      </div>
+      <div class="savebar"><button class="btn" onclick="saveConfig()">💾 Save changes</button></div>
+    </section>
+  </main>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+  del(k) { try { localStorage.removeItem(k); } catch {} }
+};
+let token = store.get('fmj_admin');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const inr = n => '₹' + Number(n).toLocaleString('en-IN');
+const initials = n => String(n || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'abhi' : m < 60 ? `${m} min pehle` : m < 1440 ? `${Math.round(m / 60)} ghante pehle` : new Date(t).toLocaleDateString('en-IN'); };
+
+// theme + sound
+const isDark = () => document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+function applyTheme(t) { if (t) document.documentElement.dataset.theme = t; $('themeBtn').textContent = isDark() ? '☀️' : '🌙'; }
+function toggleTheme() { const t = isDark() ? 'light' : 'dark'; store.set('fmj_theme', t); applyTheme(t); }
+applyTheme(store.get('fmj_theme'));
+let soundOn = store.get('fmj_sound') !== 'off';
+function toggleSound() { soundOn = !soundOn; store.set('fmj_sound', soundOn ? 'on' : 'off'); $('soundBtn').textContent = soundOn ? '🔔' : '🔕'; toast(soundOn ? 'Naye check-in par sound ON' : 'Sound OFF'); }
+$('soundBtn').textContent = soundOn ? '🔔' : '🔕';
+function ding() {
+  if (!soundOn) return;
+  try { const a = new (window.AudioContext || window.webkitAudioContext)(); [880, 1320].forEach((f, i) => { const o = a.createOscillator(), g = a.createGain(); o.frequency.value = f; o.connect(g); g.connect(a.destination); g.gain.setValueAtTime(.15, a.currentTime + i * .15); g.gain.exponentialRampToValueAtTime(.001, a.currentTime + i * .15 + .3); o.start(a.currentTime + i * .15); o.stop(a.currentTime + i * .15 + .3); }); } catch {}
+}
+
+async function api(path, data) {
+  const res = await fetch(path, { method: data ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', ...(token ? { 'x-admin-token': token } : {}) }, body: data ? JSON.stringify(data) : undefined });
+  const j = await res.json().catch(() => ({}));
+  if (res.status === 401 && path !== '/api/admin/login') { token = null; store.del('fmj_admin'); boot(); throw new Error('Session expire ho gaya'); }
+  if (!res.ok) throw new Error(j.error || 'Error');
+  return j;
+}
+function toast(msg) {
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2600);
+}
+function sheet(html) {
+  closeSheet();
+  const s = document.createElement('div'); s.className = 'scrim'; s.id = 'scrim';
+  s.innerHTML = `<div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${html}</div>`;
+  s.addEventListener('click', e => { if (e.target === s) closeSheet(); });
+  document.body.appendChild(s); requestAnimationFrame(() => s.classList.add('show'));
+}
+function closeSheet() { const s = $('scrim'); if (s) { s.classList.remove('show'); setTimeout(() => s.remove(), 250); } }
+
+let me = null;
+const isOwner = () => me?.role === 'owner';
+async function doLogin(e) {
+  e.preventDefault();
+  $('loginErr').textContent = '';
+  try {
+    const r = await api('/api/admin/login', { username: $('lgUser').value, password: $('lgPass').value });
+    token = r.token; store.set('fmj_admin', token); $('lgPass').value = '';
+    await boot();
+    if (r.staff.mustChange) changePassword(true);
+  } catch (err) { $('loginErr').textContent = err.message; }
+}
+async function logout() {
+  if (!confirm('Logout karna hai?')) return;
+  try { await api('/api/admin/logout', {}); } catch {}
+  token = null; me = null; store.del('fmj_admin'); boot();
+}
+function changePassword(forced) {
+  sheet(`<h2>🔑 Password badlein</h2><p class="muted" style="margin-top:4px">${forced ? 'Aap default password use kar rahe hain. Security ke liye abhi badal dijiye.' : 'Apne account ka password badlein'}</p>
+    <label>Purana password</label><input id="pwOld" type="password" autocomplete="current-password">
+    <label>Naya password (kam se kam 6 characters)</label><input id="pwNew" type="password" autocomplete="new-password">
+    <label>Naya password dobara</label><input id="pwNew2" type="password" autocomplete="new-password">
+    <div class="err" id="pwErr"></div>
+    <button class="btn block" id="pwGo">Save</button>`);
+  $('pwGo').onclick = async () => {
+    if ($('pwNew').value !== $('pwNew2').value) { $('pwErr').textContent = 'Dono naye password match nahi kar rahe'; return; }
+    try { await api('/api/admin/password', { oldPassword: $('pwOld').value, newPassword: $('pwNew').value }); closeSheet(); toast('✅ Password badal gaya'); }
+    catch (err) { $('pwErr').textContent = err.message; }
+  };
+}
+
+// ---------- tabs ----------
+let tab = 'dash';
+document.querySelectorAll('.nav-item').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+function showTab(t) {
+  if ((t === 'staff' || t === 'settings' || t === 'menu') && !isOwner()) t = 'dash';
+  tab = t;
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  ['dash', 'qr', 'verify', 'cust', 'menu', 'staff', 'settings'].forEach(x => $('tab-' + x).classList.toggle('hidden', x !== t));
+  if (t === 'staff') loadStaff();
+  if (t === 'menu') loadMenuEditor();
+  window.scrollTo({ top: 0 });
+  if (t === 'dash') loadDash();
+  if (t === 'qr') { qrUrl = ''; loadQR(); }
+  if (t === 'cust') loadCustomers();
+  if (t === 'settings') loadConfig();
+  if (t === 'verify') resetCode();
+}
+
+// ---------- dashboard ----------
+let seen = null, freshIds = [], pend = [];
+async function loadDash() {
+  const d = await api('/api/admin/dashboard');
+  const s = d.stats;
+  $('today').textContent = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+  $('kpis').innerHTML = [
+    ['📍', 'Aaj ke visits', s.visitsToday, 'rgba(179,38,30,.14)'], ['💰', 'Aaj ka loyalty revenue', inr(s.revenueToday), 'rgba(31,138,91,.16)'],
+    ['🎁', 'Aaj redeem hue', s.redeemedToday, 'rgba(224,165,38,.2)'], ['👥', 'Total members', s.customers, 'rgba(111,123,240,.18)'], ['🪙', 'Customers ke paas points', s.pointsOutstanding.toLocaleString('en-IN'), 'rgba(140,110,80,.16)']
+  ].map(([i, l, v, c]) => `<div class="card kpi"><div class="ic" style="background:${c}">${i}</div><div><span class="muted">${l}</span><b>${v}</b></div></div>`).join('');
+
+  const ids = d.pendingVisits.map(v => v.id);
+  const keys = d.pendingVisits.map(v => v.id + ':' + (v.orderedAt || 0));
+  const freshKeys = seen ? keys.filter(k => !seen.has(k)) : [];
+  freshIds = freshKeys.map(k => k.split(':')[0]);
+  if (freshKeys.length) {
+    const orders = freshKeys.filter(k => !k.endsWith(':0')).length;
+    ding(); toast(orders ? `🛎️ ${orders} naya order aaya` : `🔔 ${freshKeys.length} naya check-in`);
+  }
+  seen = new Set(keys);
+  $('pendBadge').textContent = ids.length; $('pendBadge').classList.toggle('hidden', !ids.length);
+  $('pendCount').textContent = ids.length;
+
+  pend = d.pendingVisits.map(v => ({
+    ...v,
+    n: v.items.reduce((t, i) => t + i.qty, 0),
+    total: v.items.reduce((t, i) => t + i.price * i.qty, 0),
+    pts: Math.floor(v.items.reduce((t, i) => t + i.points * i.qty, 0) * v.mult)
+  }));
+  lastLiveAt = Date.now();
+  renderLive();
+  $('topDishes').innerHTML = d.topDishes.map(x => `<div class="lrow"><span style="font-size:22px">${esc(x.emoji)}</span><div class="tx"><b>${esc(x.name)}</b></div><span class="chip">${x.qty} plate</span></div>`).join('') || '<div class="empty" style="padding:14px">Aaj abhi koi order confirm nahi hua.</div>';
+
+  const medals = ['🥇', '🥈', '🥉', '4', '5'];
+  $('top').innerHTML = d.topCustomers.map((c, i) => `<div class="lrow"><span class="rank">${medals[i]}</span><div class="avatar">${esc(initials(c.name))}</div><div class="tx"><b>${esc(c.name)}</b><div class="muted">${c.visits} visits</div></div><span class="chip ${c.tier}">${c.lifetimePoints} pts</span></div>`).join('') || '<div class="empty">Abhi koi member nahi.</div>';
+}
+// ---------- live order board ----------
+let liveF = 'all', lastLiveAt = 0;
+document.querySelectorAll('#liveFilter button').forEach(b => b.onclick = () => {
+  liveF = b.dataset.f; document.querySelectorAll('#liveFilter button').forEach(x => x.classList.toggle('on', x === b)); renderLive();
+});
+const mins = t => Math.max(0, Math.floor((Date.now() - t) / 60000));
+const waitLabel = m => m < 1 ? '< 1 min' : m < 60 ? `${m} min` : `${Math.floor(m / 60)}h ${m % 60}m`;
+const waitClass = m => m < 10 ? 'ok' : m < 20 ? 'warn' : 'bad';
+const maskMob = m => m ? '•••• ' + String(m).slice(-4) : '';
+function renderLive() {
+  const orders = pend.filter(v => v.n), waiting = pend.filter(v => !v.n);
+  $('fAll').textContent = pend.length; $('fOrder').textContent = orders.length; $('fWait').textContent = waiting.length;
+  const value = orders.reduce((t, v) => t + v.total, 0);
+  const avg = orders.length ? Math.round(orders.reduce((t, v) => t + mins(v.orderedAt), 0) / orders.length) : 0;
+  $('liveStats').innerHTML = [
+    ['👥 Restaurant mein', pend.length, ''],
+    ['🛎️ Confirm ke liye orders', orders.length, orders.length ? 'color:#9a5200' : ''],
+    ['💰 Pending order value', inr(value), ''],
+    ['⏱️ Avg order wait', orders.length ? waitLabel(avg) : '–', orders.length ? `color:var(--${avg < 10 ? 'ok' : avg < 20 ? 'ink' : 'danger'})` : '']
+  ].map(([l, v, st]) => `<div class="lstat"><span>${l}</span><b style="${st}">${v}</b></div>`).join('');
+
+  // FIFO: jiska order pehle aaya wo pehle; phir check-in wale
+  const list = (liveF === 'order' ? orders : liveF === 'wait' ? waiting : pend).slice()
+    .sort((a, b) => (b.n ? 1 : 0) - (a.n ? 1 : 0) || (a.orderedAt || a.at) - (b.orderedAt || b.at));
+
+  $('pending').innerHTML = list.map(v => {
+    const since = v.n ? v.orderedAt : v.at, m = mins(since);
+    const shown = v.items.slice(0, 4), extra = v.items.length - shown.length;
+    return `<article class="ticket ${v.n ? 'has-order' : ''} ${v.n && m >= 20 ? 'late' : ''} ${freshIds.includes(v.id) ? 'new' : ''}">
+      ${freshIds.includes(v.id) ? '<span class="new-tag">NEW</span>' : ''}
+      <div class="t-head">
+        <div class="avatar">${esc(initials(v.name))}</div>
+        <div class="nm"><b>${esc(v.name)}</b><span class="muted">${maskMob(v.mobile)} · <span class="chip ${esc(v.tier)}" style="padding:1px 8px">${esc(v.tier)}${v.mult > 1 ? ` ${v.mult}x` : ''}</span></span></div>
+        <span class="timer ${waitClass(m)}" data-since="${since}" title="${v.n ? 'Order aaye hue' : 'Check-in hue'}">⏱ ${waitLabel(m)}</span>
+      </div>
+      <div class="t-status">
+        ${v.n ? `<span class="st order">${v.noScan ? '📵 Bina QR scan' : v.addOn ? '➕ Extra order' : '🛎️ Order aaya'} · ${v.n} item</span>` : `<span class="st wait">⏳ Menu dekh rahe hain</span>`}
+        <span class="muted" style="font-weight:600">Check-in ${new Date(v.at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
+      </div>
+      ${v.n ? `<div class="t-items">${shown.map(i => `<div class="it"><span><span class="q">${i.qty}×</span>${esc(i.emoji)} ${esc(i.name)}</span><span class="muted">₹${(i.price * i.qty).toLocaleString('en-IN')}</span></div>`).join('')}
+          ${extra > 0 ? `<div class="more">+ ${extra} aur item</div>` : ''}</div>
+        <div class="t-total"><div><span class="muted" style="font-size:12px">Total</span><br><b>₹${v.total.toLocaleString('en-IN')}</b></div><span class="pts">🪙 +${v.pts} pts</span></div>`
+        : `<div class="t-empty">Customer phone se order karega,<br>ya counter par bole toh aap bana dijiye</div>`}
+      <div class="t-actions">
+        <button class="btn sm ${v.n ? 'ok' : 'outline'}" onclick="openBill('${v.id}')">${v.n ? `✓ Confirm · +${v.pts} pts` : '+ Order banayein'}</button>
+        ${v.n ? `<button class="icon-btn" title="Order edit karein" onclick="openBill('${v.id}')">✏️</button>` : ''}
+        <button class="icon-btn" title="Bina order ke hatayein" onclick="skipVisit('${v.id}')">✕</button>
+      </div>
+    </article>`;
+  }).join('') || `<div class="live-empty"><div class="big">${liveF === 'order' ? '🛎️' : '☕'}</div><b>${liveF === 'order' ? 'Koi order confirm ke liye baaki nahi' : liveF === 'wait' ? 'Sab customers ne order de diya hai' : 'Abhi restaurant mein koi checked-in customer nahi'}</b><p style="margin-top:4px">Customer QR scan karega toh yahan turant dikhega.</p></div>`;
+  updLiveAgo();
+}
+function updLiveAgo() {
+  const s = Math.round((Date.now() - lastLiveAt) / 1000);
+  if ($('liveUpdated')) $('liveUpdated').textContent = s < 5 ? 'abhi update hua' : `${s}s pehle update hua`;
+}
+// timers ko har 15s mein bina reload ke update karo
+setInterval(() => {
+  if (tab !== 'dash') return;
+  document.querySelectorAll('.timer[data-since]').forEach(el => {
+    const m = mins(Number(el.dataset.since)); el.textContent = '⏱ ' + waitLabel(m); el.className = 'timer ' + waitClass(m);
+  });
+  updLiveAgo();
+}, 15000);
+
+// order picker: staff confirm / bana sakta hai
+let pick = {}, pickVisit = null, menuCache = null;
+async function openBill(id) {
+  pickVisit = pend.find(v => v.id === id); if (!pickVisit) return;
+  menuCache = (await api('/api/admin/menu')).filter(m => m.active);
+  pick = {}; pickVisit.items.forEach(i => { if (menuCache.some(m => m.id === i.id)) pick[i.id] = i.qty; });
+  sheet(`<div class="cust" style="margin-bottom:10px"><div class="avatar">${esc(initials(pickVisit.name))}</div><div><h2>${esc(pickVisit.name)} ka order</h2><span class="muted">${pickVisit.items.length ? 'Customer ne phone se bheja hai. Check karke confirm kijiye.' : 'Customer ne jo bola, wo items chuniye'}${pickVisit.mult > 1 ? ` · ${pickVisit.mult}x points` : ''}</span></div></div>
+    <input id="pickSearch" placeholder="🔎 Dish dhoondhiye" oninput="renderPick()">
+    <div id="pickList" style="margin-top:10px;max-height:46vh;overflow:auto"></div>
+    <div class="picktotal" id="pickTotal"></div>
+    <button class="btn ok block" id="pickGo" onclick="confirmBill()">Confirm</button>`);
+  renderPick();
+}
+function renderPick() {
+  const q = ($('pickSearch')?.value || '').toLowerCase();
+  const groups = {};
+  menuCache.filter(m => !q || m.name.toLowerCase().includes(q)).forEach(m => (groups[m.category] ||= []).push(m));
+  $('pickList').innerHTML = Object.entries(groups).map(([c, items]) => `<div class="muted" style="font-weight:800;text-transform:uppercase;font-size:11px;letter-spacing:.06em;margin:10px 0 4px">${esc(c)}</div>` + items.map(m => {
+    const n = pick[m.id] || 0;
+    return `<div class="pickrow ${n ? 'on' : ''}"><span style="font-size:22px">${esc(m.emoji)}</span><div style="flex:1;min-width:0"><b>${esc(m.name)}</b><div class="muted">₹${m.price} · ${m.points} pts</div></div>
+      <div class="stepper"><button onclick="pickQty('${m.id}',-1)">−</button><span>${n}</span><button onclick="pickQty('${m.id}',1)">+</button></div></div>`;
+  }).join('')).join('') || '<div class="empty">Koi dish nahi mili</div>';
+  const items = Object.entries(pick).map(([id, qty]) => ({ m: menuCache.find(x => x.id === id), qty })).filter(x => x.m);
+  const total = items.reduce((t, x) => t + x.m.price * x.qty, 0), base = items.reduce((t, x) => t + x.m.points * x.qty, 0), n = items.reduce((t, x) => t + x.qty, 0);
+  const pts = Math.floor(base * pickVisit.mult);
+  $('pickTotal').innerHTML = `<span>${n} item · <b>₹${total.toLocaleString('en-IN')}</b></span><span class="chip" style="background:var(--ok-soft);color:var(--ok)">+${pts} points</span>`;
+  $('pickGo').disabled = !n;
+  $('pickGo').textContent = n ? `✓ Confirm karein: ${esc(pickVisit.name.split(' ')[0])} ko +${pts} points` : 'Items chuniye';
+}
+function pickQty(id, d) { pick[id] = Math.max(0, Math.min(50, (pick[id] || 0) + d)); if (!pick[id]) delete pick[id]; renderPick(); }
+async function confirmBill() {
+  $('pickGo').disabled = true;
+  try {
+    const r = await api('/api/admin/bill', { visitId: pickVisit.id, items: Object.entries(pick).map(([id, qty]) => ({ id, qty })) });
+    closeSheet(); toast(`✅ ${r.name} ko +${r.points} points (₹${r.total})`); loadDash();
+  } catch (err) { toast(err.message); $('pickGo').disabled = false; }
+}
+async function skipVisit(id) {
+  if (!confirm('Is check-in ko bina points ke hatana hai?')) return;
+  await api('/api/admin/skip-visit', { visitId: id }); loadDash();
+}
+
+// ---------- QR ----------
+let qrUrl = '', qrExpire = 0;
+function drawQR(el, url, size) {
+  el.innerHTML = '';
+  if (window.QRCode) new QRCode(el, { text: url, width: size, height: size, correctLevel: QRCode.CorrectLevel.M });
+  else el.innerHTML = '<p style="color:#c62828;max-width:240px">QR library load nahi hui (internet check karein).</p>';
+}
+async function loadQR() {
+  try {
+    const q = await api('/api/admin/qr');
+    qrExpire = Date.now() + q.msLeft;
+    $('lanList').textContent = q.lanUrls.length ? 'Network address: ' + q.lanUrls.join(', ') : 'Network address nahi mila, WiFi check karein.';
+    if (q.url !== qrUrl) {
+      qrUrl = q.url;
+      $('qrLink').textContent = q.url; $('qrLink').href = q.url;
+      drawQR($('qrBox'), q.url, 520);
+      if ($('kioskQR')) drawQR($('kioskQR'), q.url, 720);
+    }
+  } catch (err) { toast(err.message); }
+}
+function openKiosk() {
+  const k = document.createElement('div'); k.className = 'kiosk'; k.id = 'kiosk';
+  k.innerHTML = `<button class="icon-btn close" onclick="closeKiosk()" title="Band karein">✕</button>
+    <h1>${esc($('rName').textContent)} Rewards 🎁</h1><p>Scan karein, points kamaiye, free khana paaiye!</p>
+    <div class="qrframe" id="kioskQR"></div>
+    <div class="perks"><span>🎁 Welcome bonus</span><span>🎟️ Stamp card</span><span>🎂 Birthday treat</span></div>
+    <p style="font-size:14px;opacity:.75" id="kioskCount"></p>`;
+  document.body.appendChild(k); drawQR($('kioskQR'), qrUrl, 720);
+  k.requestFullscreen?.().catch(() => {});
+}
+function closeKiosk() { $('kiosk')?.remove(); if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); }
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) $('kiosk')?.remove(); });
+setInterval(() => {
+  if (!token || (tab !== 'qr' && !$('kiosk'))) return;
+  const left = Math.max(0, Math.ceil((qrExpire - Date.now()) / 1000));
+  $('qrCount').textContent = `Naya QR ${left}s mein`;
+  $('ringArc').style.strokeDashoffset = 88 * (1 - left / 60);
+  if ($('kioskCount')) $('kioskCount').textContent = `QR ${left}s mein refresh hoga`;
+  if (left <= 0) loadQR();
+}, 1000);
+
+// ---------- verify ----------
+let code = '';
+$('keypad').innerHTML = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '⌫'].map(k => `<button data-k="${k}">${k}</button>`).join('');
+$('keypad').onclick = e => { const k = e.target.dataset?.k; if (k) press(k); };
+document.addEventListener('keydown', e => {
+  if (tab !== 'verify' || e.target.tagName === 'INPUT') return;
+  if (/^\d$/.test(e.key)) press(e.key); else if (e.key === 'Backspace') press('⌫'); else if (e.key === 'Escape') press('C');
+});
+function press(k) {
+  if (k === 'C') code = ''; else if (k === '⌫') code = code.slice(0, -1); else if (code.length < 6) code += k;
+  renderDigits(); if (code.length === 6) verify();
+}
+function renderDigits(bad) {
+  $('digits').className = 'digits' + (bad ? ' bad' : '');
+  $('digits').innerHTML = Array.from({ length: 6 }, (_, i) => `<span class="${code[i] ? 'f' : ''}">${code[i] || ''}</span>`).join('');
+}
+function resetCode() {
+  code = ''; renderDigits();
+  $('verifyOut').innerHTML = `<div class="vresult"><div class="big">🎟️</div><h2>Code ka intezaar</h2><p class="muted" style="margin-top:6px">Keypad ya keyboard se code type kijiye. 6 digit hote hi apne aap check hoga.</p></div>`;
+}
+async function verify(confirmIt) {
+  try {
+    const r = await api('/api/admin/verify', { code, confirm: !!confirmIt });
+    if (r.confirmed) {
+      $('verifyOut').innerHTML = `<div class="vresult"><div class="big">✅</div><h2>Reward de diya gaya!</h2><p class="muted" style="margin-top:6px">${esc(r.rewardName)} · ${esc(r.name)}</p><button class="btn ghost" style="margin-top:18px" onclick="resetCode()">Agla code</button></div>`;
+      code = ''; renderDigits(); toast('🎉 Redeemed');
+    } else {
+      $('verifyOut').innerHTML = `<div class="vresult"><span class="chip" style="background:var(--ok-soft);color:var(--ok)">✔ Valid code</span><div class="big" style="margin-top:10px">🎁</div><h2>${esc(r.rewardName)}</h2>
+        <div class="cust" style="justify-content:center;margin:12px 0 20px"><div class="avatar">${esc(initials(r.name))}</div><div style="text-align:left"><b>${esc(r.name)}</b><div class="muted">${esc(r.mobile)}</div></div></div>
+        <button class="btn ok block" onclick="verify(true)">Reward diya, confirm karein</button><button class="btn ghost block" style="margin-top:8px" onclick="resetCode()">Cancel</button></div>`;
+    }
+  } catch (err) {
+    renderDigits(true);
+    $('verifyOut').innerHTML = `<div class="vresult"><div class="big">❌</div><h2>${esc(err.message)}</h2><p class="muted" style="margin-top:6px">Customer se code dobara check karwaiye.</p></div>`;
+    setTimeout(() => { code = ''; renderDigits(); }, 900);
+  }
+}
+
+// ---------- customers ----------
+let customers = [], tierF = '';
+document.querySelectorAll('#filters button').forEach(b => b.onclick = () => { tierF = b.dataset.f; document.querySelectorAll('#filters button').forEach(x => x.classList.toggle('on', x === b)); renderCustomers(); });
+async function loadCustomers() { customers = await api('/api/admin/customers'); renderCustomers(); }
+function renderCustomers() {
+  const q = $('search').value.toLowerCase();
+  const list = customers.filter(c => (!tierF || c.tier === tierF) && (!q || c.name.toLowerCase().includes(q) || c.mobile.includes(q)));
+  $('custCount').textContent = `${customers.length} members${list.length !== customers.length ? ` · ${list.length} dikh rahe hain` : ''}`;
+  $('custBody').innerHTML = list.map(c => `<tr>
+    <td><div class="cust"><div class="avatar">${esc(initials(c.name))}</div><div><b>${esc(c.name)}</b><div class="muted">${esc(c.mobile)}</div></div></div></td>
+    <td><span class="chip ${c.tier}">${c.tier}</span></td><td class="num">${c.points}</td><td class="num">${c.lifetimePoints}</td>
+    <td class="num">${c.visits}</td><td class="num">${c.stamps}</td><td>${c.dob ? new Date(c.dob).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '<span class="muted">–</span>'}</td>
+    <td class="muted">${new Date(c.createdAt).toLocaleDateString('en-IN')}</td>
+    <td>${isOwner() ? `<button class="btn sm ghost" onclick="adjust('${c.id}')">± Points</button>` : ''}</td></tr>`).join('')
+    || `<tr><td colspan="9"><div class="empty"><div class="big">🔍</div>Koi customer nahi mila.</div></td></tr>`;
+}
+function adjust(id) {
+  const c = customers.find(x => x.id === id);
+  sheet(`<div class="cust" style="margin-bottom:6px"><div class="avatar">${esc(initials(c.name))}</div><div><h2>${esc(c.name)}</h2><span class="muted">Abhi ${c.points} points</span></div></div>
+    <label>Points (minus ke liye − chuniye)</label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">${[-50, -10, 10, 25, 50, 100].map(n => `<button class="btn sm ghost" onclick="$('adjN').value=${n}">${n > 0 ? '+' : ''}${n}</button>`).join('')}</div>
+    <input id="adjN" type="number" style="margin-top:10px" placeholder="Jaise 50 ya -20">
+    <label>Reason</label><input id="adjR" value="Goodwill bonus">
+    <button class="btn block" style="margin-top:18px" id="adjGo">Save</button>`);
+  $('adjGo').onclick = async () => {
+    try { await api('/api/admin/adjust', { customerId: id, delta: $('adjN').value, note: $('adjR').value }); toast('✅ Points update ho gaye'); closeSheet(); loadCustomers(); }
+    catch (err) { toast(err.message); }
+  };
+}
+
+// ---------- settings ----------
+const SKEYS = ['restaurantName', 'stampTarget', 'stampReward', 'welcomeBonus', 'referralBonus', 'doublePointsDay', 'checkinCooldownHours', 'publicUrl'];
+async function loadConfig() {
+  const c = await api('/api/admin/config');
+  SKEYS.forEach(k => $('s_' + k).value = c.settings[k]);
+  $('rewardRows').innerHTML = '';
+  c.rewards.forEach(addRewardRow);
+}
+function addRewardRow(r = {}) {
+  const d = document.createElement('div'); d.className = 'rw'; d.dataset.id = r.id || '';
+  d.innerHTML = `<input class="emo" value="${esc(r.emoji || '🎁')}" maxlength="4"><input value="${esc(r.name || '')}" placeholder="Reward naam"><input type="number" min="1" value="${esc(r.cost || '')}" placeholder="Pts">
+    <label class="switch" style="margin:0"><input type="checkbox" ${r.active === false ? '' : 'checked'}><span></span></label>
+    <button class="icon-btn" style="width:34px;height:34px;font-size:13px" title="Hatayein" onclick="this.parentElement.remove()">✕</button>`;
+  $('rewardRows').appendChild(d);
+}
+async function saveConfig() {
+  const settings = Object.fromEntries(SKEYS.map(k => [k, $('s_' + k).value]));
+  const rewards = [...document.querySelectorAll('#rewardRows .rw')].map(d => {
+    const i = d.querySelectorAll('input');
+    return { id: d.dataset.id || undefined, emoji: i[0].value, name: i[1].value.trim(), cost: i[2].value, active: i[3].checked };
+  });
+  try { await api('/api/admin/config', { settings, rewards }); toast('💾 Settings save ho gayi'); $('rName').textContent = settings.restaurantName; loadConfig(); }
+  catch (err) { toast(err.message); }
+}
+
+// ---------- menu editor ----------
+async function loadMenuEditor() { $('menuRows').innerHTML = ''; (await api('/api/admin/menu')).forEach(addMenuRow); }
+function addMenuRow(m = {}) {
+  const d = document.createElement('div'); d.className = 'mrow'; d.dataset.id = m.id || ''; d.dataset.veg = m.veg === false ? '0' : '1';
+  d.innerHTML = `<input class="emo" value="${esc(m.emoji || '🍽️')}" maxlength="4"><input value="${esc(m.name || '')}" placeholder="Dish ka naam">
+    <input value="${esc(m.category || '')}" placeholder="Category" list="catList"><input type="number" min="1" value="${esc(m.price || '')}" placeholder="₹">
+    <input type="number" min="0" value="${esc(m.points ?? '')}" placeholder="pts" style="font-weight:800;color:var(--ok)">
+    <button class="vegbtn" type="button"></button>
+    <label class="switch" style="margin:0"><input type="checkbox" ${m.active === false ? '' : 'checked'}><span></span></label>
+    <button class="icon-btn" style="width:34px;height:34px;font-size:13px" title="Hatayein" onclick="this.parentElement.remove()">✕</button>`;
+  const vb = d.querySelector('.vegbtn');
+  const paint = () => { const v = d.dataset.veg === '1'; vb.textContent = v ? '🟢 Veg' : '🔴 Non'; vb.style.color = v ? 'var(--ok)' : 'var(--danger)'; };
+  vb.onclick = () => { d.dataset.veg = d.dataset.veg === '1' ? '0' : '1'; paint(); }; paint();
+  $('menuRows').appendChild(d);
+  if (!m.id && !m.name) d.querySelectorAll('input')[1].focus();
+  refreshCatList();
+}
+function refreshCatList() {
+  let dl = $('catList'); if (!dl) { dl = document.createElement('datalist'); dl.id = 'catList'; document.body.appendChild(dl); }
+  const cats = new Set([...document.querySelectorAll('#menuRows .mrow')].map(r => r.querySelectorAll('input')[2].value.trim()).filter(Boolean));
+  dl.innerHTML = [...cats].map(c => `<option value="${esc(c)}">`).join('');
+}
+function autoPoints() {
+  if (!confirm('Sab dishes ke points price ka 10% set kar dein? (jaise ₹250 → 25 pts). Save dabane tak kuch save nahi hoga.')) return;
+  document.querySelectorAll('#menuRows .mrow').forEach(r => { const i = r.querySelectorAll('input'); if (Number(i[3].value) > 0) i[4].value = Math.round(Number(i[3].value) / 10); });
+}
+async function saveMenu() {
+  const items = [...document.querySelectorAll('#menuRows .mrow')].map(r => {
+    const i = r.querySelectorAll('input');
+    return { id: r.dataset.id || undefined, emoji: i[0].value, name: i[1].value.trim(), category: i[2].value.trim(), price: i[3].value, points: i[4].value, veg: r.dataset.veg === '1', active: i[5].checked };
+  });
+  const bad = items.filter(x => x.name && !(Number(x.price) > 0));
+  if (bad.length) { toast(`"${bad[0].name}" ka price daaliye`); return; }
+  try { const r = await api('/api/admin/menu', { items }); toast(`💾 Menu save ho gaya (${r.count} dishes)`); loadMenuEditor(); }
+  catch (err) { toast(err.message); }
+}
+
+// ---------- staff ----------
+let staffList = [];
+async function loadStaff() { staffList = await api('/api/admin/staff'); renderStaff(); }
+function renderStaff() {
+  $('staffBody').innerHTML = staffList.map(s => `<tr>
+    <td><div class="cust"><div class="avatar">${esc(initials(s.name))}</div><b>${esc(s.name)}${s.id === me.id ? ' <span class="muted">(aap)</span>' : ''}</b></div></td>
+    <td class="muted">${esc(s.username)}</td>
+    <td><span class="chip ${s.role}">${s.role === 'owner' ? '👑 Owner' : '👨‍🍳 Staff'}</span></td>
+    <td>${s.active ? '<span class="chip staff">● Active</span>' : '<span class="chip off">Band</span>'}</td>
+    <td class="muted">${new Date(s.createdAt).toLocaleDateString('en-IN')}</td>
+    <td style="text-align:right"><button class="btn sm ghost" onclick="editStaff('${s.id}')">Edit</button>
+      ${s.id !== me.id ? `<button class="btn sm ghost" style="color:var(--danger)" onclick="deleteStaff('${s.id}')">Delete</button>` : ''}</td></tr>`).join('');
+}
+function editStaff(id) {
+  const s = staffList.find(x => x.id === id) || { name: '', username: '', role: 'staff', active: true };
+  sheet(`<h2>${id ? 'Staff edit karein' : '+ Naya staff account'}</h2>
+    <label>Naam</label><input id="stName" value="${esc(s.name)}" placeholder="Jaise: Ramesh">
+    <label>Username (login ke liye)</label><input id="stUser" value="${esc(s.username)}" autocapitalize="none" placeholder="jaise: ramesh">
+    <label>${id ? 'Naya password (khaali = same rahega)' : 'Password (kam se kam 6 characters)'}</label><input id="stPass" type="password" autocomplete="new-password">
+    <label>Role</label>
+    <div class="seg" id="stRole"><button data-r="staff" class="${s.role === 'staff' ? 'on' : ''}">👨‍🍳 Staff</button><button data-r="owner" class="${s.role === 'owner' ? 'on' : ''}">👑 Owner</button></div>
+    ${id ? `<label style="display:flex;align-items:center;justify-content:space-between">Account active <span class="switch"><input type="checkbox" id="stActive" ${s.active ? 'checked' : ''}><span></span></span></label>` : ''}
+    <div class="err" id="stErr"></div>
+    <button class="btn block" id="stGo">Save</button>`);
+  let role = s.role;
+  $('stRole').onclick = e => { const r = e.target.dataset?.r; if (!r) return; role = r; [...$('stRole').children].forEach(b => b.classList.toggle('on', b.dataset.r === r)); };
+  $('stGo').onclick = async () => {
+    try {
+      await api('/api/admin/staff', { id, name: $('stName').value, username: $('stUser').value, password: $('stPass').value, role, active: id ? $('stActive').checked : true });
+      closeSheet(); toast('✅ Staff save ho gaya'); await loadStaff();
+      if (id === me.id) boot();
+    } catch (err) { $('stErr').textContent = err.message; }
+  };
+}
+async function deleteStaff(id) {
+  const s = staffList.find(x => x.id === id);
+  if (!confirm(`${s.name} ka account delete karna hai? Wo login nahi kar payenge.`)) return;
+  try { await api('/api/admin/staff/delete', { id }); toast('Account delete ho gaya'); loadStaff(); } catch (err) { toast(err.message); }
+}
+
+// ---------- boot ----------
+async function boot() {
+  if (!token) { $('loginView').classList.remove('hidden'); $('appView').classList.add('hidden'); return; }
+  try { me = await api('/api/admin/me'); } catch { return; }
+  $('loginView').classList.add('hidden'); $('appView').classList.remove('hidden');
+  $('meName').textContent = me.name; $('meAv').textContent = initials(me.name);
+  $('meRole').textContent = me.role === 'owner' ? '👑 Owner' : '👨‍🍳 Staff'; $('meRole').className = 'chip ' + me.role;
+  document.querySelectorAll('.owner-only').forEach(el => el.classList.toggle('hidden', !isOwner()));
+  try { const c = await api('/api/admin/config'); $('rName').textContent = c.settings.restaurantName; document.title = c.settings.restaurantName + ' Admin'; } catch { return; }
+  showTab(tab);
+}
+setInterval(() => { if (token && tab === 'dash' && document.visibilityState === 'visible') loadDash().catch(() => {}); }, 5000);
+boot();
+</script>
+</body>
+</html>

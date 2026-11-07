@@ -1,0 +1,1103 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#b3261e">
+<title>Filmujha Rewards</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+  .wrap { max-width: 480px; margin: 0 auto; padding: 16px 16px 180px; }
+
+  /* ---------- Auth ---------- */
+  .auth-hero { background: radial-gradient(120% 90% at 100% 0%, #f29d38 0%, transparent 55%), linear-gradient(160deg, #b3261e, #7a1712); color: #fff; padding: 36px 20px 70px; text-align: center; }
+  .auth-hero .logo { width: 72px; height: 72px; border-radius: 22px; background: rgba(255,255,255,.16); display: grid; place-items: center; font-size: 38px; margin: 0 auto 14px; backdrop-filter: blur(6px); }
+  .auth-hero h1 { font-size: 28px; font-weight: 800; }
+  .auth-hero p { opacity: .9; margin-top: 6px; }
+  .perks { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
+  .perks span { background: rgba(255,255,255,.16); padding: 6px 12px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+  .auth-card { max-width: 448px; margin: -46px auto 24px; position: relative; }
+  .scan-note { display: flex; gap: 10px; align-items: center; background: var(--ok-soft); color: var(--ok); padding: 10px 12px; border-radius: 12px; font-size: 13px; font-weight: 600; margin-bottom: 14px; }
+  .pin { letter-spacing: 14px; font-size: 22px; text-align: center; font-weight: 700; }
+  .opt { color: var(--muted); font-weight: 500; }
+
+  /* ---------- App bar ---------- */
+  .appbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .appbar .who { flex: 1; min-width: 0; }
+  .appbar .who b { display: block; font-size: 17px; }
+
+  /* ---------- Wallet ---------- */
+  .wallet { position: relative; overflow: hidden; border-radius: 24px; padding: 20px; color: #fff; box-shadow: var(--shadow-lg); min-height: 190px; display: flex; flex-direction: column; }
+  .wallet.Silver { background: linear-gradient(135deg, #5a6472, #2e343d); }
+  .wallet.Gold { background: linear-gradient(135deg, #e0a526, #9a5b06); }
+  .wallet.Platinum { background: linear-gradient(135deg, #6f7bf0, #2b2f86); }
+  .wallet::before, .wallet::after { content: ""; position: absolute; border-radius: 50%; background: rgba(255,255,255,.09); }
+  .wallet::before { width: 220px; height: 220px; right: -70px; top: -90px; }
+  .wallet::after { width: 140px; height: 140px; right: 40px; bottom: -80px; }
+  .wallet .top { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; }
+  .wallet .brand { font-weight: 800; letter-spacing: .02em; }
+  .wallet .tier { background: rgba(255,255,255,.2); padding: 4px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; }
+  .wallet .pts { font-size: 48px; font-weight: 800; line-height: 1; margin-top: auto; position: relative; z-index: 1; letter-spacing: -.02em; }
+  .wallet .pts small { font-size: 15px; font-weight: 600; opacity: .85; margin-left: 6px; letter-spacing: 0; }
+  .wallet .meta { display: flex; justify-content: space-between; margin-top: 10px; font-size: 12px; opacity: .85; position: relative; z-index: 1; }
+  .wallet .tierbar { height: 5px; background: rgba(255,255,255,.25); border-radius: 9px; margin-top: 12px; overflow: hidden; position: relative; z-index: 1; }
+  .wallet .tierbar i { display: block; height: 100%; background: #fff; border-radius: 9px; transition: width .8s; }
+
+  /* ---------- Home blocks ---------- */
+  .banner { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 16px; margin-bottom: 12px; font-size: 14px; }
+  .banner .em { font-size: 26px; }
+  .banner.bday { background: linear-gradient(90deg, #fde7f0, #fff1e0); color: #7a2148; }
+  .banner.dbl { background: linear-gradient(90deg, #fff3cf, #ffe3c2); color: #7a4a00; }
+  .live-code { display: flex; align-items: center; gap: 12px; background: var(--ok-soft); border: 1.5px dashed var(--ok); color: var(--ok); padding: 14px; border-radius: 16px; margin-bottom: 14px; cursor: pointer; }
+  .live-code b { display: block; color: var(--ink); }
+  .live-code .em { font-size: 28px; }
+
+  .next { display: flex; gap: 14px; align-items: center; margin-top: 14px; }
+  .next .tile { width: 54px; height: 54px; border-radius: 16px; background: var(--brand-soft); display: grid; place-items: center; font-size: 28px; flex: 0 0 auto; }
+  .next .body { flex: 1; min-width: 0; }
+  .next .body .progress { margin-top: 8px; }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+  .stats div { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px; text-align: center; }
+  .stats b { display: block; font-size: 20px; font-weight: 800; }
+  .stats span { font-size: 12px; color: var(--muted); }
+
+  .stamps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 14px; }
+  .stamp { aspect-ratio: 1; border-radius: 50%; border: 2px dashed var(--line); display: grid; place-items: center; font-size: 13px; font-weight: 700; color: var(--muted); transition: transform .3s; }
+  .stamp.on { border: 0; background: linear-gradient(135deg, var(--accent), var(--brand)); color: #fff; font-size: 20px; box-shadow: 0 4px 12px rgba(179,38,30,.3); }
+  .stamp.last:not(.on) { border-color: var(--accent); color: var(--accent); font-size: 18px; }
+  .stamp.pop { animation: pop .6s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes pop { 0% { transform: scale(.3); } 100% { transform: scale(1); } }
+
+  .carousel { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 16px; padding: 4px 16px 18px; margin: 0 -16px; scrollbar-width: none; }
+  .carousel::-webkit-scrollbar { display: none; }
+  .rcard { position: relative; flex: 0 0 164px; scroll-snap-align: start; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 10px 10px 12px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 8px; cursor: pointer; overflow: hidden; transition: transform .15s; }
+  .rcard:active { transform: scale(.97); }
+  .rcard .r-img { position: relative; height: 92px; border-radius: 14px; display: grid; place-items: center; font-size: 44px; background: radial-gradient(70% 70% at 30% 25%, var(--surface), transparent), linear-gradient(140deg, var(--surface-2), var(--brand-soft)); }
+  .rcard .r-badge { position: absolute; top: 8px; right: 8px; display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 800; letter-spacing: .04em; padding: 3px 8px; border-radius: 99px; background: var(--surface); color: var(--muted); box-shadow: 0 2px 6px rgba(40,20,5,.1); }
+  .rcard .r-badge svg { width: 11px; height: 11px; }
+  .rcard .r-name { font-size: 14px; font-weight: 800; line-height: 1.25; min-height: 35px; padding: 0 2px; }
+  .rcard .r-bar { height: 6px; border-radius: 99px; background: var(--surface-2); overflow: hidden; margin: 0 2px; }
+  .rcard .r-bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--brand)); }
+  .rcard .r-foot { display: flex; align-items: center; justify-content: space-between; padding: 0 2px; font-size: 12px; }
+  .rcard .r-cost { display: inline-flex; align-items: center; gap: 4px; font-weight: 800; color: var(--brand); }
+  .rcard .r-cost svg { width: 13px; height: 13px; }
+  .rcard .r-need { color: var(--muted); font-weight: 600; }
+  /* ready = brand-filled ticket */
+  .rcard.ready { border: 0; color: #fff; background: radial-gradient(90% 70% at 100% 0%, #f29d38 0%, transparent 60%), linear-gradient(160deg, #b3261e, #7a1712); box-shadow: 0 10px 24px rgba(179,38,30,.3); }
+  .rcard.ready .r-img { background: rgba(255,255,255,.14); }
+  .rcard.ready .r-badge { background: #fff; color: var(--ok); }
+  .rcard.ready .r-cost { color: #ffd38a; }
+  .rcard.ready .r-go { display: inline-flex; align-items: center; gap: 4px; background: #fff; color: var(--brand); font-weight: 800; font-size: 12px; padding: 5px 10px; border-radius: 99px; }
+  .rcard.ready::after { content: ""; position: absolute; width: 90px; height: 90px; border-radius: 50%; right: -30px; bottom: -40px; background: rgba(255,255,255,.08); }
+  .rcard .r-badge svg, .rcard .r-cost svg, .h-ic svg, .h-sum svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ---------- How it works (balanced line icons) ---------- */
+  .how-card { padding: 18px 16px; }
+  .steps { list-style: none; margin: 0; padding: 0; counter-reset: s; }
+  .steps li { position: relative; display: flex; gap: 14px; padding-bottom: 18px; counter-increment: s; }
+  .steps li:last-child { padding-bottom: 0; }
+  .steps li:not(:last-child)::after { content: ""; position: absolute; left: 21px; top: 46px; bottom: 2px; width: 2px; border-radius: 2px; background: var(--line); }
+  .steps li.done:not(:last-child)::after { background: var(--ok); }
+  .s-ic { position: relative; width: 44px; height: 44px; flex: 0 0 44px; border-radius: 14px; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand); }
+  .s-ic svg, .b-ic svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .s-ic::after { content: counter(s); position: absolute; right: -5px; top: -5px; width: 18px; height: 18px; border-radius: 50%; background: var(--surface); border: 1.5px solid var(--brand); color: var(--brand); font-size: 10px; font-weight: 800; display: grid; place-items: center; }
+  .steps li.done .s-ic { background: var(--ok-soft); color: var(--ok); }
+  .steps li.done .s-ic::after { content: "✓"; border-color: var(--ok); background: var(--ok); color: #fff; }
+  .steps li.now .s-ic { box-shadow: 0 0 0 4px var(--brand-soft); background: var(--brand); color: #fff; }
+  .s-tx { display: flex; flex-direction: column; justify-content: center; min-height: 44px; gap: 2px; }
+  .s-tx b { font-size: 15px; }
+  .s-tx span { font-size: 13px; color: var(--muted); line-height: 1.4; }
+  .bonus-head { margin: 20px 0 10px; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .bonus { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .bonus > div { background: var(--surface-2); border-radius: 14px; padding: 12px 8px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .b-ic { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: var(--surface); color: var(--accent); margin-bottom: 2px; }
+  .bonus b { font-size: 16px; font-weight: 800; }
+  .bonus span { font-size: 11px; color: var(--muted); line-height: 1.3; }
+
+  /* ---------- Rewards list ---------- */
+  /* ---------- Rewards page ---------- */
+  .rw-hero { position: relative; overflow: hidden; color: #fff; border-radius: 22px; padding: 18px; background: radial-gradient(100% 80% at 100% 0%, #f29d38 0%, transparent 60%), linear-gradient(160deg, #b3261e, #7a1712); box-shadow: var(--shadow-lg); }
+  .rw-hero::after { content: ""; position: absolute; width: 170px; height: 170px; border-radius: 50%; right: -60px; top: -70px; background: rgba(255,255,255,.08); }
+  .rw-top { display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 1; }
+  .rw-lbl { font-size: 12px; font-weight: 700; opacity: .85; text-transform: uppercase; letter-spacing: .06em; }
+  .rw-pts { font-size: 44px; font-weight: 800; line-height: 1; letter-spacing: -.02em; margin-top: 4px; }
+  .rw-tier { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 800; background: rgba(255,255,255,.18); padding: 5px 10px; border-radius: 99px; }
+  .rw-tier svg, .rw-cost svg, .rw-row-tx svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linejoin: round; }
+  .rw-next { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; margin-top: 18px; }
+  .rw-next-tx span { display: block; font-size: 11px; opacity: .8; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; }
+  .rw-next-tx b { font-size: 15px; }
+  .rw-need { font-size: 13px; color: #ffd38a; white-space: nowrap; }
+  .rw-bar { position: relative; z-index: 1; height: 8px; border-radius: 99px; background: rgba(255,255,255,.22); margin-top: 8px; overflow: hidden; }
+  .rw-bar i { display: block; height: 100%; border-radius: 99px; background: #fff; transition: width .6s; }
+  .rw-chips { position: relative; z-index: 1; display: flex; gap: 6px; flex-wrap: wrap; margin-top: 14px; }
+  .rw-chips span { font-size: 11px; font-weight: 700; background: rgba(255,255,255,.16); padding: 4px 9px; border-radius: 99px; }
+  .rw-live { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding: 12px 14px; border-radius: 16px; background: var(--ok-soft); border: 1.5px dashed var(--ok); cursor: pointer; }
+  .rw-live .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ok); animation: blink 1.2s infinite; flex: 0 0 auto; }
+  .rw-live b { display: block; font-size: 14px; }
+  .rw-live span { font-size: 12px; color: var(--muted); }
+  .rw-live .go { font-weight: 800; color: var(--ok); font-size: 13px; white-space: nowrap; }
+  .rw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .rw-card { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 6px; padding: 10px 10px 12px; border-radius: 20px; color: #fff; background: radial-gradient(90% 70% at 100% 0%, #f29d38 0%, transparent 60%), linear-gradient(160deg, #b3261e, #7a1712); box-shadow: 0 10px 24px rgba(179,38,30,.28); }
+  .rw-card.special { background: radial-gradient(90% 70% at 100% 0%, #ffd38a 0%, transparent 60%), linear-gradient(160deg, #c2410c, #9a3412); }
+  .rw-card::after { content: ""; position: absolute; width: 90px; height: 90px; border-radius: 50%; right: -30px; bottom: -40px; background: rgba(255,255,255,.08); }
+  .rw-img { position: relative; height: 96px; border-radius: 14px; display: grid; place-items: center; font-size: 46px; background: rgba(255,255,255,.14); }
+  .rw-card .r-badge { position: absolute; top: 8px; right: 8px; display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 800; letter-spacing: .04em; padding: 3px 8px; border-radius: 99px; background: #fff; color: var(--ok); }
+  .rw-card .r-badge svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .rw-name { font-size: 14px; font-weight: 800; line-height: 1.25; min-height: 35px; padding: 0 2px; }
+  .rw-cost { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 800; color: #ffd38a; padding: 0 2px; }
+  .rw-btn { position: relative; z-index: 1; margin-top: 4px; border: 0; border-radius: 12px; padding: 10px; background: #fff; color: var(--brand); font-weight: 800; font-size: 13px; cursor: pointer; }
+  .rw-btn:disabled { opacity: .6; cursor: not-allowed; }
+  .rw-locked { padding: 4px 14px; }
+  .rw-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .rw-row:last-child { border-bottom: 0; }
+  .rw-ring { position: relative; width: 52px; height: 52px; flex: 0 0 52px; display: grid; place-items: center; }
+  .rw-ring .ring { position: absolute; inset: 0; transform: rotate(-90deg); }
+  .rw-ring .rg-bg, .rw-ring .rg-fg { fill: none; stroke-width: 4; }
+  .rw-ring .rg-bg { stroke: var(--surface-2); }
+  .rw-ring .rg-fg { stroke: var(--brand); stroke-linecap: round; transition: stroke-dashoffset .6s; }
+  .rw-ring span { font-size: 22px; }
+  .rw-row-tx { flex: 1; min-width: 0; }
+  .rw-row-tx b { display: block; font-size: 14px; }
+  .rw-row-tx span { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
+  .rw-row-need { text-align: right; flex: 0 0 auto; }
+  .rw-row-need b { display: block; font-size: 16px; font-weight: 800; color: var(--brand); }
+  .rw-row-need span { font-size: 11px; color: var(--muted); }
+  .rw-how { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+  .rw-how > div { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .rw-how .s-ic { margin-bottom: 4px; }
+  .rw-how .s-ic::after { display: none; }
+  .rw-how .s-ic svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .rw-how b { font-size: 13px; }
+  .rw-how span { font-size: 11px; color: var(--muted); }
+  .rw-cta { position: relative; overflow: hidden; display: grid; grid-template-columns: auto 1fr; gap: 12px 14px; align-items: center; margin-top: 14px; padding: 16px; border-radius: 20px; background: linear-gradient(135deg, var(--brand-soft), var(--surface) 70%); border: 1px solid var(--line); box-shadow: var(--shadow); }
+  .rw-cta::after { content: ""; position: absolute; width: 120px; height: 120px; right: -40px; top: -50px; border-radius: 50%; background: radial-gradient(circle, rgba(242,157,56,.22), transparent 70%); }
+  .cta-ic { width: 48px; height: 48px; border-radius: 15px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, var(--accent), var(--brand)); box-shadow: 0 8px 18px rgba(179,38,30,.28); }
+  .cta-ic svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .cta-tx { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 3px; }
+  .cta-tx > b { font-size: 15px; }
+  .cta-tx span { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+  .cta-tx span b { color: var(--ink-2); }
+  .cta-btn { position: relative; z-index: 1; grid-column: 1 / -1; border: 0; border-radius: 14px; padding: 13px; font-weight: 800; font-size: 14px; color: #fff; cursor: pointer; background: linear-gradient(90deg, var(--brand), var(--accent)); box-shadow: 0 8px 18px rgba(179,38,30,.25); transition: transform .1s; }
+  .cta-btn:active { transform: scale(.98); }
+  .rlist { display: grid; gap: 12px; }
+  .ritem { display: flex; gap: 14px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 14px; box-shadow: var(--shadow); }
+  .ritem.special { background: linear-gradient(120deg, var(--brand-soft), var(--surface)); border-color: var(--brand); }
+  .ritem .em { width: 56px; height: 56px; border-radius: 16px; background: var(--surface-2); display: grid; place-items: center; font-size: 30px; flex: 0 0 auto; }
+  .ritem .body { flex: 1; min-width: 0; }
+  .ritem .body b { display: block; }
+  .ritem .progress { margin-top: 8px; height: 6px; }
+
+  /* ---------- History ---------- */
+  /* ---------- History ---------- */
+  .h-sum { position: relative; overflow: hidden; border-radius: 22px; padding: 18px; color: #fff; background: radial-gradient(100% 80% at 100% 0%, #f29d38 0%, transparent 60%), linear-gradient(160deg, #b3261e, #7a1712); box-shadow: var(--shadow-lg); }
+  .h-sum::after { content: ""; position: absolute; width: 160px; height: 160px; border-radius: 50%; right: -50px; bottom: -80px; background: rgba(255,255,255,.08); }
+  .h-sum .top { display: flex; justify-content: space-between; align-items: flex-end; position: relative; z-index: 1; }
+  .h-sum .lbl { font-size: 12px; font-weight: 700; opacity: .85; text-transform: uppercase; letter-spacing: .06em; }
+  .h-sum .net { font-size: 34px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; margin-top: 2px; }
+  .h-sum .bal { text-align: right; font-size: 12px; opacity: .9; }
+  .h-sum .bal b { display: block; font-size: 18px; }
+  .h-grid { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 16px; }
+  .h-grid > div { background: rgba(255,255,255,.14); border-radius: 14px; padding: 10px 6px; text-align: center; }
+  .h-grid svg { width: 18px; height: 18px; opacity: .95; }
+  .h-grid b { display: block; font-size: 16px; font-weight: 800; margin-top: 2px; }
+  .h-grid span { font-size: 10px; opacity: .85; }
+  .h-filters { margin-top: 14px; }
+  .h-day { display: flex; justify-content: space-between; align-items: baseline; margin: 18px 4px 8px; }
+  .h-day b { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-2); }
+  .h-day span { font-size: 12px; font-weight: 800; }
+  .h-list { padding: 6px 14px; }
+  .h-row { position: relative; display: flex; gap: 12px; align-items: center; padding: 11px 0; }
+  .h-row:not(:last-child)::after { content: ""; position: absolute; left: 19px; top: 52px; bottom: -11px; width: 2px; background: var(--line); border-radius: 2px; }
+  .h-ic { position: relative; z-index: 1; width: 40px; height: 40px; flex: 0 0 40px; border-radius: 13px; display: grid; place-items: center; }
+  .h-ic svg { width: 19px; height: 19px; }
+  .t-earn { background: var(--ok-soft); color: var(--ok); }
+  .t-spend { background: var(--brand-soft); color: var(--brand); }
+  .t-order { background: rgba(242,157,56,.16); color: #b8650a; }
+  .t-visit { background: rgba(111,123,240,.15); color: #4b55c9; }
+  .t-bonus { background: rgba(224,165,38,.18); color: #9a6200; }
+  .t-neutral { background: var(--surface-2); color: var(--ink-2); }
+  .h-tx { flex: 1; min-width: 0; }
+  .h-tx b { display: block; font-size: 14px; }
+  .h-tx span { display: block; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .h-amt { font-weight: 800; font-size: 14px; padding: 4px 10px; border-radius: 99px; font-variant-numeric: tabular-nums; }
+  .h-amt.plus { color: var(--ok); background: var(--ok-soft); }
+  .h-amt.minus { color: var(--danger); background: var(--danger-soft); }
+  .h-time { font-size: 11px; color: var(--muted); }
+  .h-empty { text-align: center; padding: 34px 16px; color: var(--muted); }
+  .h-empty .h-ic { margin: 0 auto 10px; width: 54px; height: 54px; border-radius: 18px; }
+  .amt.plus { color: var(--ok); } .amt.minus { color: var(--danger); }
+
+  .icon-btn { color: var(--ink-2); }
+  .sh { display: inline-flex; align-items: center; gap: 10px; }
+  .sh-ic { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand); }
+  .sh-ic svg { width: 18px; height: 18px; }
+  /* shared line-icon style */
+  .ico, .sbox svg, .share svg, .copy svg, .inv-art svg, .mi-pts svg, .mult svg, .inv-steps svg { fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ---------- Invite ---------- */
+  .inv-hero { position: relative; overflow: hidden; text-align: center; color: #fff; border-radius: 24px; padding: 26px 20px 24px; background: radial-gradient(110% 80% at 100% 0%, #f29d38 0%, transparent 60%), linear-gradient(160deg, #b3261e, #7a1712); box-shadow: var(--shadow-lg); }
+  .inv-hero::before, .inv-hero::after { content: ""; position: absolute; border-radius: 50%; background: rgba(255,255,255,.08); }
+  .inv-hero::before { width: 180px; height: 180px; left: -60px; bottom: -80px; }
+  .inv-hero::after { width: 120px; height: 120px; right: -30px; top: 60px; }
+  .inv-art { position: relative; z-index: 1; display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .inv-art .bub { width: 46px; height: 46px; border-radius: 50%; background: rgba(255,255,255,.18); display: grid; place-items: center; }
+  .inv-art .bub svg { width: 22px; height: 22px; }
+  .inv-art .gift { width: 68px; height: 68px; border-radius: 22px; background: #fff; color: var(--brand); display: grid; place-items: center; box-shadow: 0 10px 24px rgba(0,0,0,.2); animation: bob 3s ease-in-out infinite; }
+  .inv-art .gift svg { width: 34px; height: 34px; }
+  @keyframes bob { 50% { transform: translateY(-5px) rotate(-3deg); } }
+  .inv-kicker { position: relative; z-index: 1; display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; background: rgba(255,255,255,.18); padding: 4px 10px; border-radius: 99px; }
+  .inv-hero h1 { position: relative; z-index: 1; font-size: 24px; font-weight: 800; margin-top: 10px; line-height: 1.25; }
+  .inv-hero h1 span { color: #ffd38a; }
+  .inv-hero p { position: relative; z-index: 1; opacity: .9; margin-top: 8px; font-size: 14px; }
+  .inv-code { margin-top: -10px; position: relative; z-index: 2; margin-left: 8px; margin-right: 8px; }
+  .inv-code .lbl { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .ticket { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 8px 0 14px; padding: 14px 14px 14px 18px; border-radius: 16px; border: 2px dashed var(--brand); background: var(--brand-soft); }
+  .ticket::before, .ticket::after { content: ""; position: absolute; top: 50%; width: 16px; height: 16px; border-radius: 50%; background: var(--surface); transform: translateY(-50%); }
+  .ticket::before { left: -9px; } .ticket::after { right: -9px; }
+  .ticket b { font-size: 26px; font-weight: 800; letter-spacing: 4px; color: var(--brand); font-variant-numeric: tabular-nums; }
+  .copy { display: inline-flex; align-items: center; gap: 6px; border: 0; background: var(--brand); color: #fff; font-weight: 700; font-size: 13px; padding: 9px 14px; border-radius: 10px; cursor: pointer; }
+  .copy svg { width: 16px; height: 16px; }
+  .copy.done { background: var(--ok); }
+  .share-row { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 8px; }
+  .share { display: flex; align-items: center; justify-content: center; gap: 6px; border: 1.5px solid var(--line); background: var(--surface); border-radius: 12px; padding: 11px 6px; font-weight: 700; font-size: 13px; cursor: pointer; }
+  .share svg { width: 18px; height: 18px; }
+  .share.wa { background: #1f9d55; border-color: #1f9d55; color: #fff; }
+  .inv-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+  .inv-stats > div { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; text-align: center; }
+  .inv-stats b { display: block; font-size: 24px; font-weight: 800; color: var(--brand); }
+  .inv-stats span { font-size: 12px; color: var(--muted); }
+  .inv-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; position: relative; }
+  .inv-steps > div { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .inv-steps > div:not(:last-child)::after { content: ""; position: absolute; top: 22px; left: calc(50% + 28px); width: calc(100% - 56px + 8px); border-top: 2px dashed var(--line); }
+  .inv-steps .s-ic svg { width: 22px; height: 22px; }
+  .inv-steps .s-ic::after { display: none; }
+  .inv-steps .n { position: absolute; top: -6px; left: calc(50% + 12px); z-index: 1; width: 18px; height: 18px; border-radius: 50%; background: var(--brand); color: #fff; font-size: 10px; font-weight: 800; display: grid; place-items: center; }
+  .inv-steps b { font-size: 13px; margin-top: 6px; }
+  .inv-steps span { font-size: 11px; color: var(--muted); }
+  .friend { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .friend:last-child { border-bottom: 0; }
+  .friend .avatar { width: 36px; height: 36px; font-size: 13px; }
+  .friend .tx { flex: 1; }
+  .friend .pts { font-weight: 800; color: var(--ok); }
+  .ref-empty { text-align: center; padding: 18px 6px; color: var(--muted); font-size: 13px; }
+
+  /* ---------- Menu ---------- */
+  .mult { display: flex; align-items: center; gap: 10px; padding: 10px 14px; margin-bottom: 12px; border-radius: 14px; color: #fff; font-size: 13px; background: linear-gradient(90deg, var(--brand), var(--accent)); }
+  .mult svg { width: 20px; height: 20px; flex: 0 0 auto; }
+  .msticky { position: sticky; top: 0; z-index: 6; background: var(--bg); margin: 0 -16px; padding: 6px 16px 0; }
+  .cats .vegtoggle { border: 1.5px solid var(--line); }
+  .cats .vegtoggle.on { border-color: #1f8a5b; background: var(--ok-soft); color: #1f8a5b; }
+  .cat-sep { flex: 0 0 1px; align-self: stretch; margin: 6px 2px; background: var(--line); }
+  .cats { display: flex; gap: 8px; overflow-x: auto; margin: 10px -16px 0; padding: 2px 16px 10px; scrollbar-width: none; }
+  .cats::-webkit-scrollbar { display: none; }
+  .cats button { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); padding: 8px 14px; border-radius: 99px; font-weight: 700; font-size: 13px; cursor: pointer; color: var(--ink-2); }
+  .cats button i { font-style: normal; font-size: 11px; min-width: 18px; padding: 1px 6px; border-radius: 99px; background: var(--surface-2); color: var(--muted); }
+  .cats button.on { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .cats button.on i { background: rgba(255,255,255,.22); color: #fff; }
+  .mcat { display: flex; align-items: baseline; justify-content: space-between; margin: 18px 2px 10px; }
+  .mcat b { font-size: 17px; font-weight: 800; }
+  .mcat span { font-size: 12px; color: var(--muted); }
+  .mi { display: flex; gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 14px; margin-bottom: 12px; transition: border-color .2s, box-shadow .2s; }
+  .mi.in-cart { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+  .mi-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .mi-tags { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-height: 18px; }
+  .tag { font-size: 10px; font-weight: 800; letter-spacing: .03em; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; }
+  .tag.best { background: #fdf1d3; color: #8a5a00; }
+  .tag.val { background: var(--ok-soft); color: var(--ok); }
+  .mi-name { font-size: 16px; font-weight: 800; line-height: 1.25; }
+  .mi-price { font-weight: 700; color: var(--ink-2); }
+  .mi-pts { display: inline-flex; align-items: center; gap: 5px; align-self: flex-start; margin-top: 4px; font-size: 12px; font-weight: 800; color: var(--ok); background: var(--ok-soft); padding: 4px 9px; border-radius: 99px; }
+  .mi-pts svg { width: 13px; height: 13px; }
+  .mi-pts s { color: var(--muted); font-weight: 600; text-decoration: line-through; margin-right: 2px; }
+  .mi-media { position: relative; flex: 0 0 112px; display: flex; flex-direction: column; align-items: center; }
+  .mi-img { width: 112px; height: 104px; border-radius: 18px; display: grid; place-items: center; font-size: 50px; background: radial-gradient(70% 70% at 30% 25%, var(--surface), transparent), linear-gradient(140deg, var(--surface-2), var(--brand-soft)); }
+  .mi-media .addbtn, .mi-media .stepper { margin-top: -18px; position: relative; z-index: 1; box-shadow: 0 6px 14px rgba(40,20,5,.14); }
+  .veg { width: 14px; height: 14px; border: 1.5px solid #1f8a5b; border-radius: 3px; display: inline-grid; place-items: center; flex: 0 0 auto; }
+  .veg::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #1f8a5b; }
+  .veg.non { border-color: #b3261e; } .veg.non::after { background: #b3261e; }
+  .ptag { display: inline-block; margin-top: 4px; background: var(--ok-soft); color: var(--ok); font-weight: 800; font-size: 12px; padding: 2px 8px; border-radius: 99px; }
+  .stepper { display: flex; align-items: center; border-radius: 12px; overflow: hidden; background: var(--brand); flex: 0 0 auto; }
+  .stepper button { width: 34px; height: 36px; border: 0; background: transparent; color: #fff; font-size: 18px; font-weight: 800; cursor: pointer; }
+  .stepper span { min-width: 24px; text-align: center; font-weight: 800; color: #fff; }
+  .addbtn { min-width: 96px; height: 36px; border: 1.5px solid var(--brand); background: var(--surface); color: var(--brand); font-weight: 800; letter-spacing: .04em; border-radius: 12px; padding: 0 18px; cursor: pointer; flex: 0 0 auto; }
+  .addbtn:disabled { opacity: .4; cursor: not-allowed; }
+  .m-empty { text-align: center; padding: 34px 10px; color: var(--muted); }
+  .m-empty svg { width: 40px; height: 40px; color: var(--line); margin-bottom: 8px; }
+  .scan-tip { position: relative; display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 14px; margin-bottom: 14px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); overflow: hidden; animation: fade .3s; }
+  .scan-tip::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: linear-gradient(180deg, var(--accent), var(--brand)); }
+  .st-ic { width: 42px; height: 42px; flex: 0 0 42px; border-radius: 13px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, var(--accent), var(--brand)); box-shadow: 0 6px 14px rgba(179,38,30,.25); }
+  .st-ic svg, .st-x svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .st-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .st-tx b { font-size: 14px; }
+  .st-tx span { font-size: 12px; color: var(--muted); line-height: 1.4; }
+  .st-count { flex: 0 0 auto; font-size: 12px; font-weight: 800; color: var(--brand); background: var(--brand-soft); padding: 4px 9px; border-radius: 99px; font-variant-numeric: tabular-nums; }
+  .st-x { flex: 0 0 auto; width: 30px; height: 30px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); display: grid; place-items: center; cursor: pointer; }
+  .st-x:hover { background: var(--surface-2); }
+  .st-x svg { width: 16px; height: 16px; }
+  .lockmsg { display: flex; gap: 10px; align-items: center; line-height: 1.4; background: #fff8e6; color: #7a4a00; border: 1px solid #f6d58e; padding: 12px; border-radius: 14px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .cartbar { position: fixed; left: 0; right: 0; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 49; display: flex; justify-content: center; padding: 0 12px; pointer-events: none; }
+  .cartbar > div { pointer-events: auto; width: 100%; max-width: 456px; background: var(--brand); color: #fff; border-radius: 18px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow-lg); animation: rise .3s; }
+  .cartbar .sum { flex: 1; min-width: 0; font-size: 13px; }
+  .cartbar .sum b { display: block; font-size: 16px; }
+  .cartbar .btn { background: #fff; color: var(--brand); }
+  .order-card { border: 1.5px solid var(--accent); margin-bottom: 14px; }
+  .order-card .line { display: flex; justify-content: space-between; font-size: 14px; padding: 4px 0; }
+  .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; color: #8a5a00; background: #fdf1d3; padding: 4px 10px; border-radius: 99px; }
+  .status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: blink 1.2s infinite; }
+  @keyframes blink { 50% { opacity: .3; } }
+
+  /* ---------- Bottom nav ---------- */
+  .tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; display: flex; justify-content: center; padding: 0 12px calc(10px + env(safe-area-inset-bottom)); pointer-events: none; }
+  .tabbar nav { pointer-events: auto; width: 100%; max-width: 456px; display: flex; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow-lg); padding: 6px; }
+  .tabbar button { flex: 1; border: 0; background: none; padding: 8px 4px; border-radius: 16px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; font-weight: 700; color: var(--muted); cursor: pointer; }
+  .tabbar button .i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; }
+  .tabbar button.on { color: var(--brand); background: var(--brand-soft); }
+  .tabbar button.on .i { stroke-width: 2.2; transform: translateY(-1px); }
+
+  /* ---------- Code sheet ---------- */
+  .codeboxes { display: flex; gap: 8px; justify-content: center; margin: 18px 0 8px; }
+  .codeboxes span { width: 46px; height: 58px; border-radius: 12px; background: var(--surface-2); display: grid; place-items: center; font-size: 30px; font-weight: 800; color: var(--brand); }
+  .timer { text-align: center; font-weight: 700; color: var(--ink-2); }
+  .timer b { font-variant-numeric: tabular-nums; color: var(--brand); }
+
+  /* ---------- Celebration ---------- */
+  .celebrate { position: fixed; inset: 0; z-index: 150; display: grid; place-items: center; background: rgba(20,10,5,.6); backdrop-filter: blur(4px); padding: 20px; animation: fade .25s; }
+  .celebrate .box { background: var(--surface); border-radius: 28px; padding: 30px 22px 22px; text-align: center; max-width: 360px; width: 100%; box-shadow: var(--shadow-lg); animation: rise .45s cubic-bezier(.2,1.4,.4,1); position: relative; overflow: hidden; }
+  .celebrate .big { font-size: 68px; line-height: 1; }
+  .celebrate h2 { font-size: 22px; margin-top: 12px; }
+  .celebrate p { color: var(--ink-2); margin: 8px 0 20px; }
+  .confetti { position: absolute; top: -10px; width: 8px; height: 14px; border-radius: 2px; animation: fall 1.8s linear forwards; }
+  @keyframes fall { to { transform: translateY(460px) rotate(540deg); opacity: 0; } }
+  @keyframes fade { from { opacity: 0; } }
+  @keyframes rise { from { transform: translateY(30px) scale(.9); opacity: 0; } }
+  .view { animation: fade .25s; }
+</style>
+</head>
+<body>
+
+<!-- ================= AUTH ================= -->
+<section id="auth" class="hidden">
+  <div class="auth-hero">
+    <div class="logo">🍽️</div>
+    <h1 id="rName">Filmujha</h1>
+    <p>Rewards Club. Khaiye, points kamaiye, free treats paaiye.</p>
+    <div class="perks"><span>🎁 <b id="wb">50</b> welcome pts</span><span>🎟️ Stamp card</span><span>🎂 Birthday treat</span></div>
+  </div>
+  <div class="auth-card card">
+    <div id="scanNote" class="scan-note hidden">✅ QR scan ho gaya! Join / login karte hi aapka visit record ho jayega.</div>
+    <div class="seg"><button id="tReg" class="on" onclick="authTab('reg')">Naya member</button><button id="tLog" onclick="authTab('log')">Login</button></div>
+    <form id="regForm" onsubmit="register(event)">
+      <label>Aapka naam</label><input id="rgName" required maxlength="40" placeholder="Jaise: Rahul Sharma" autocomplete="name">
+      <label>Mobile number</label><input id="rgMob" required inputmode="numeric" maxlength="10" placeholder="98765 43210" autocomplete="tel">
+      <label>4-digit PIN banaiye</label><input id="rgPin" class="pin" required inputmode="numeric" maxlength="4" type="password" placeholder="••••">
+      <label>Birthday <span class="opt">(optional)</span></label><input id="rgDob" type="date">
+      <label>Referral code <span class="opt">(optional)</span></label><input id="rgRef" maxlength="10" placeholder="Dost ka code" style="text-transform:uppercase">
+      <button class="btn block" style="margin-top:20px">Join karein 🎉</button>
+    </form>
+    <form id="logForm" class="hidden" onsubmit="login(event)">
+      <label>Mobile number</label><input id="lgMob" required inputmode="numeric" maxlength="10" autocomplete="tel">
+      <label>PIN</label><input id="lgPin" class="pin" required inputmode="numeric" maxlength="4" type="password" placeholder="••••">
+      <button class="btn block" style="margin-top:20px">Login</button>
+    </form>
+    <div class="err" id="authErr"></div>
+  </div>
+</section>
+
+<!-- ================= APP ================= -->
+<section id="app" class="hidden">
+  <div class="wrap">
+    <div class="appbar">
+      <div class="avatar" id="avatar">R</div>
+      <div class="who"><span class="muted">Namaste 👋</span><b id="hello">…</b></div>
+      <button class="icon-btn" onclick="toggleTheme()" title="Theme" aria-label="Theme badlein" id="themeBtn"></button>
+      <button class="icon-btn" onclick="logout()" title="Logout" aria-label="Logout"><svg class="ico" viewBox="0 0 24 24" width="20" height="20"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
+    </div>
+
+    <!-- HOME -->
+    <div id="v-home" class="view">
+      <div id="banners"></div>
+      <div id="liveCode"></div>
+      <div id="orderCard"></div>
+      <div class="wallet Silver" id="wallet">
+        <div class="top"><span class="brand" id="wBrand">FILMUJHA</span><span class="tier" id="wTier">⭐ Silver</span></div>
+        <div class="pts"><span id="pts">0</span><small>points</small></div>
+        <div class="tierbar"><i id="tierBar" style="width:0"></i></div>
+        <div class="meta"><span id="tierNext"></span><span id="wMob"></span></div>
+      </div>
+
+      <div class="card next" id="nextCard"></div>
+
+      <div class="stats">
+        <div><b id="stVisits">0</b><span>Visits</span></div>
+        <div><b id="stStamps">0</b><span>Stamps</span></div>
+        <div><b id="stLife">0</b><span>Lifetime pts</span></div>
+      </div>
+
+      <div class="section-head"><h2 class="sh"><span class="sh-ic"><svg class="ico" viewBox="0 0 24 24"><path d="M3 9a3 3 0 0 0 0 6v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3a3 3 0 0 0 0-6V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2Z"/><path d="M13 5v2M13 17v2M13 11v2"/></svg></span>Stamp card</h2><span class="muted" id="stampCount"></span></div>
+      <div class="card">
+        <p id="stampText" style="font-weight:600"></p>
+        <div class="stamps" id="stamps"></div>
+      </div>
+
+      <div class="section-head"><h2 class="sh"><span class="sh-ic"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg></span>Rewards</h2><button class="link" onclick="go('rewards')">Sab dekhein →</button></div>
+      <div class="carousel" id="carousel"></div>
+
+      <div class="section-head"><h2>Kaise kaam karta hai</h2><span class="muted">5 aasaan steps</span></div>
+      <div class="card how-card">
+        <ol class="steps" id="howSteps">
+          <li data-step="scan">
+            <div class="s-ic"><svg viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7.5" y="7.5" width="9" height="9" rx="1.5"/></svg></div>
+            <div class="s-tx"><b>QR scan kijiye</b><span>Counter par lage QR ko scan karte hi aaj ka visit aur 1 stamp</span></div>
+          </li>
+          <li data-step="order">
+            <div class="s-ic"><svg viewBox="0 0 24 24"><path d="M3 2v7a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V2M6 2v20M21 15V2a5 5 0 0 0-5 5v6a2 2 0 0 0 2 2h3Zm0 0v7"/></svg></div>
+            <div class="s-tx"><b>Menu se order</b><span>Har dish par fix points likhe hain. Jitna khaaiye, utne points</span></div>
+          </li>
+          <li data-step="confirm">
+            <div class="s-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8L16.5 9"/></svg></div>
+            <div class="s-tx"><b>Staff confirm karega</b><span>Order serve hote hi staff ek tap mein confirm karta hai</span></div>
+          </li>
+          <li data-step="points">
+            <div class="s-ic"><svg viewBox="0 0 24 24"><path d="m12 3 2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8Z"/></svg></div>
+            <div class="s-tx"><b>Points apne aap</b><span>Gold par 1.25x, Platinum par 1.5x, Double Day par 2x</span></div>
+          </li>
+          <li data-step="redeem">
+            <div class="s-ic"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg></div>
+            <div class="s-tx"><b>Free khana redeem</b><span>Reward chuniye, 6-digit code staff ko dikhaiye, enjoy!</span></div>
+          </li>
+        </ol>
+        <div class="bonus-head">Bonus points bhi</div>
+        <div class="bonus">
+          <div><div class="b-ic"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></div><b id="bWelcome">+50</b><span>Join karne par</span></div>
+          <div><div class="b-ic"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg></div><b id="bRefer">+100</b><span>Dost laane par</span></div>
+          <div><div class="b-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1M2 21h20M7 8v3M12 8v3M17 8v3"/></svg></div><b>Free</b><span>Birthday dessert</span></div>
+        </div>
+        <button class="btn block" style="margin-top:16px" onclick="go('menu')">Menu dekhein →</button>
+      </div>
+    </div>
+
+    <!-- MENU -->
+    <div id="v-menu" class="view hidden">
+      <h1>Menu</h1>
+      <p class="muted" style="margin:4px 0 14px">Har dish par fix points. Jitna khaaiye, utne points.</p>
+      <div id="multBanner"></div>
+      <div id="menuLock"></div>
+      <div class="msticky">
+        <div class="cats" id="cats"></div>
+      </div>
+      <div id="menuList"><div class="skel" style="height:120px;margin-bottom:12px"></div><div class="skel" style="height:120px"></div></div>
+    </div>
+
+    <!-- REWARDS -->
+    <div id="v-rewards" class="view hidden">
+      <h1>Rewards</h1>
+      <p class="muted" style="margin:4px 0 14px">Points se free khana. Chuniye, code dikhaiye, enjoy!</p>
+      <section class="rw-hero" id="rwHero"></section>
+      <div id="rwCode"></div>
+      <div id="rewardList"></div>
+      <div class="section-head"><h2>Redeem kaise karein</h2></div>
+      <div class="card rw-how">
+        <div><span class="s-ic"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg></span><b>Reward chuniye</b><span>Ready wale par Redeem</span></div>
+        <div><span class="s-ic"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 10h.01M12 10h.01M16 10h.01M8 14h8"/></svg></span><b>6-digit code</b><span>10 minute valid</span></div>
+        <div><span class="s-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8L16.5 9"/></svg></span><b>Staff verify</b><span>Aur khana aapka!</span></div>
+      </div>
+      <div class="rw-cta" id="rwCta"></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div id="v-history" class="view hidden">
+      <h1>History</h1>
+      <p class="muted" style="margin:4px 0 14px">Aapke points, orders aur rewards ka poora hisaab</p>
+      <section class="h-sum" id="hSum"></section>
+      <div class="cats h-filters" id="hFilters"></div>
+      <div id="history"></div>
+    </div>
+
+    <!-- INVITE -->
+    <div id="v-invite" class="view hidden">
+      <section class="inv-hero">
+        <div class="inv-art" aria-hidden="true">
+          <span class="bub b1"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg></span>
+          <span class="gift"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg></span>
+          <span class="bub b2"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg></span>
+        </div>
+        <span class="inv-kicker">Refer &amp; earn</span>
+        <h1>Dost ko khilaaiye,<br>dono paaiye <span id="invBonus">+100</span> points</h1>
+        <p>Dost aapke code se join kare, dono ke wallet mein bonus turant aa jayega.</p>
+      </section>
+
+      <div class="card inv-code">
+        <span class="lbl">Aapka referral code</span>
+        <div class="ticket"><b id="refCode">----</b>
+          <button class="copy" onclick="copyRef()"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg><span id="copyTxt">Copy</span></button>
+        </div>
+        <div class="share-row">
+          <button class="share wa" onclick="shareWA()"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.5 8.5 0 1 1 21 11.5Z"/></svg>WhatsApp</button>
+          <button class="share" onclick="shareRef()"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>Share</button>
+          <button class="share" onclick="copyLink()"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Link</button>
+        </div>
+      </div>
+
+      <div class="inv-stats">
+        <div><b id="refN">0</b><span>Dost join hue</span></div>
+        <div><b id="refPts">0</b><span>Points kamaye</span></div>
+      </div>
+
+      <div class="section-head"><h2>Kaise kaam karta hai</h2></div>
+      <div class="card inv-steps">
+        <div><span class="n">1</span><div class="s-ic"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg></div><b>Code bhejiye</b><span>WhatsApp ya link se</span></div>
+        <div><span class="n">2</span><div class="s-ic"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></div><b>Dost join kare</b><span>Aapke code ke saath</span></div>
+        <div><span class="n">3</span><div class="s-ic"><svg viewBox="0 0 24 24"><path d="m12 3 2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8Z"/></svg></div><b>Dono ko points</b><span id="invStepPts">+100 turant</span></div>
+      </div>
+
+      <div class="section-head"><h2>Aapke dost</h2><span class="muted" id="refCount"></span></div>
+      <div class="card" id="refList" style="padding:6px 16px"></div>
+    </div>
+  </div>
+
+  <div class="tabbar"><nav>
+    <button data-v="home" class="on" onclick="go('home')"><svg class="i" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></svg>Home</button>
+    <button data-v="menu" onclick="go('menu')"><svg class="i" viewBox="0 0 24 24"><path d="M3 2v7a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V2M6 2v20M21 15V2a5 5 0 0 0-5 5v6a2 2 0 0 0 2 2h3Zm0 0v7"/></svg>Menu</button>
+    <button data-v="rewards" onclick="go('rewards')"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg>Rewards</button>
+    <button data-v="history" onclick="go('history')"><svg class="i" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg>History</button>
+    <button data-v="invite" onclick="go('invite')"><svg class="i" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>Invite</button>
+  </nav></div>
+  <div class="cartbar hidden" id="cartbar"><div>
+    <div class="sum"><b id="cartTotal">₹0</b><span id="cartInfo"></span></div>
+    <button class="btn sm" id="cartBtn" onclick="reviewOrder()">Order bhejein →</button>
+  </div></div>
+</section>
+
+<script>
+const $ = id => document.getElementById(id);
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+  del(k) { try { localStorage.removeItem(k); } catch {} }
+};
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let token = store.get('fmj_token');
+const qrT = new URLSearchParams(location.search).get('t');
+// invite link (?ref=CODE) se aaye dost ke liye referral code pehle se bhar do
+const refParam = (new URLSearchParams(location.search).get('ref') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+if (refParam) { const el = document.getElementById('rgRef'); if (el) el.value = refParam; }
+let pub = null, me = null, prevStamps = null, prevPending = null, prevVisit = null;
+
+// ---------- theme ----------
+const SUN = '<svg class="ico" viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+const MOON = '<svg class="ico" viewBox="0 0 24 24" width="20" height="20"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>';
+function applyTheme(t) { if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; $('themeBtn').innerHTML = isDark() ? SUN : MOON; }
+const isDark = () => document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+function toggleTheme() { const t = isDark() ? 'light' : 'dark'; store.set('fmj_theme', t); applyTheme(t); }
+applyTheme(store.get('fmj_theme'));
+
+// ---------- helpers ----------
+async function api(path, data) {
+  const res = await fetch(path, { method: data ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) }, body: data ? JSON.stringify(data) : undefined });
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok) throw Object.assign(new Error(j.error || 'Kuch galat ho gaya'), { status: res.status });
+  return j;
+}
+function toast(msg) {
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2800);
+}
+const buzz = p => { try { navigator.vibrate?.(p); } catch {} };
+
+function sheet(html) {
+  closeSheet();
+  const s = document.createElement('div'); s.className = 'scrim'; s.id = 'scrim';
+  s.innerHTML = `<div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${html}</div>`;
+  s.addEventListener('click', e => { if (e.target === s) closeSheet(); });
+  document.body.appendChild(s); requestAnimationFrame(() => s.classList.add('show'));
+}
+function closeSheet() { const s = $('scrim'); if (!s) return; s.classList.remove('show'); setTimeout(() => s.remove(), 250); clearInterval(window._tick); }
+
+function celebrate(emoji, title, text) {
+  buzz([30, 40, 60]);
+  const el = document.createElement('div'); el.className = 'celebrate';
+  const colors = ['#b3261e', '#f29d38', '#1f8a5b', '#6f7bf0', '#e0a526'];
+  const conf = Array.from({ length: 28 }, (_, i) => `<i class="confetti" style="left:${Math.random() * 100}%;background:${colors[i % 5]};animation-delay:${Math.random() * .5}s"></i>`).join('');
+  el.innerHTML = `<div class="box">${conf}<div class="big">${emoji}</div><h2>${title}</h2><p>${text}</p><button class="btn block">Badhiya! 👍</button></div>`;
+  el.querySelector('button').onclick = () => el.remove();
+  document.body.appendChild(el);
+}
+
+// ---------- auth ----------
+function authTab(w) {
+  $('tReg').classList.toggle('on', w === 'reg'); $('tLog').classList.toggle('on', w === 'log');
+  $('regForm').classList.toggle('hidden', w !== 'reg'); $('logForm').classList.toggle('hidden', w !== 'log'); $('authErr').textContent = '';
+}
+async function register(e) {
+  e.preventDefault();
+  try {
+    token = (await api('/api/register', { name: $('rgName').value, mobile: $('rgMob').value, pin: $('rgPin').value, dob: $('rgDob').value, referral: $('rgRef').value })).token;
+    store.set('fmj_token', token); window._justJoined = true; start();
+  } catch (err) { $('authErr').textContent = err.message; buzz(80); }
+}
+async function login(e) {
+  e.preventDefault();
+  try { token = (await api('/api/login', { mobile: $('lgMob').value, pin: $('lgPin').value })).token; store.set('fmj_token', token); start(); }
+  catch (err) { $('authErr').textContent = err.message; buzz(80); }
+}
+async function logout() {
+  if (!confirm('Logout karna hai?')) return;
+  try { await api('/api/logout', {}); } catch {}
+  token = null; store.del('fmj_token'); me = null; start();
+}
+
+// ---------- nav ----------
+let view = 'home';
+function go(v) {
+  view = v;
+  ['home', 'menu', 'rewards', 'history', 'invite'].forEach(x => $('v-' + x).classList.toggle('hidden', x !== v));
+  document.querySelectorAll('.tabbar button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  window.scrollTo({ top: 0 });
+  if (v === 'menu') loadMenu();
+  renderCartBar();
+}
+
+// ---------- menu & order ----------
+let menu = null, cart = {}, cartDirty = false, catF = '', vegOnly = false;
+const STAR = '<svg viewBox="0 0 24 24"><path d="m12 3 2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8Z"/></svg>';
+async function loadMenu() {
+  try { menu = await api('/api/menu'); } catch { return; }
+  // "Zyada points" = har ₹ par sabse zyada points wali dishes (median se 20% upar)
+  const r = menu.map(m => m.points / m.price).sort((a, b) => a - b), med = r[Math.floor(r.length / 2)] || 0;
+  menu.forEach(m => m.value = m.points / m.price > med * 1.2);
+  renderMenu();
+}
+function setCat(c) { catF = c; renderMenu(); }
+function toggleVeg() { vegOnly = !vegOnly; buzz(10); renderMenu(); }
+const canOrder = () => !!me;
+function renderMenu() {
+  if (!menu) return;
+  const mult = me?.earnMult || 1;
+  $('multBanner').innerHTML = mult > 1 ? `<div class="mult"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7Z"/></svg><span>Aaj aapko har dish par <b>${mult}x points</b> milenge (${esc(me.tier.name)}${me.doublePointsToday ? ' + Double Points Day' : ''})</span></div>` : '';
+  const tipKey = 'fmj_scantip_' + new Date().toDateString();
+  const tipHidden = (() => { try { return localStorage.getItem(tipKey) === '1'; } catch { return false; } })();
+  $('menuLock').innerHTML = me?.hasCheckin || tipHidden ? '' : `<div class="scan-tip" role="note">
+      <div class="st-ic"><svg viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7.5" y="7.5" width="9" height="9" rx="1.5"/></svg></div>
+      <div class="st-tx"><b>Aaj ka stamp lena na bhooliye</b><span>Counter ka QR scan kijiye. Order aap abhi bhi kar sakte hain.</span></div>
+      <span class="st-count" title="Stamp card">${Math.min(me?.stamps || 0, me?.stampTarget || 10)}/${me?.stampTarget || 10}</span>
+      <button class="st-x" aria-label="Band karein" onclick="try{localStorage.setItem('${tipKey}','1')}catch{};this.closest('.scan-tip').remove()"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>`;
+  const base = menu.filter(m => !vegOnly || m.veg);
+  // veg toggle + category chips with counts (ek hi line mein)
+  const counts = {}; base.forEach(m => counts[m.category] = (counts[m.category] || 0) + 1);
+  if (catF && !counts[catF]) catF = '';
+  $('cats').innerHTML = `<button class="vegtoggle ${vegOnly ? 'on' : ''}" id="vegBtn" aria-pressed="${vegOnly}"><span class="veg"></span>Veg only</button><span class="cat-sep" aria-hidden="true"></span>`
+    + [['', base.length], ...Object.entries(counts)].map(([c, n]) => `<button class="${c === catF ? 'on' : ''}" data-cat="${esc(c)}">${c ? esc(c) : 'Sab'} <i>${n}</i></button>`).join('');
+  $('vegBtn').onclick = toggleVeg;
+  $('cats').querySelectorAll('button[data-cat]').forEach(b => b.onclick = () => setCat(b.dataset.cat));
+  const list = base.filter(m => !catF || m.category === catF);
+  const groups = {}; list.forEach(m => (groups[m.category] ||= []).push(m));
+  $('menuList').innerHTML = Object.entries(groups).map(([cat, items]) => `<div class="mcat"><b>${esc(cat)}</b><span>${items.length} dish</span></div>` + items.map(m => {
+    const n = cart[m.id] || 0, pts = Math.floor(m.points * mult);
+    return `<article class="mi ${n ? 'in-cart' : ''}">
+      <div class="mi-body">
+        <div class="mi-tags"><span class="veg ${m.veg ? '' : 'non'}" title="${m.veg ? 'Veg' : 'Non-veg'}"></span>${m.bestseller ? '<span class="tag best">★ Bestseller</span>' : ''}${m.value ? '<span class="tag val">Zyada points</span>' : ''}</div>
+        <b class="mi-name">${esc(m.name)}</b>
+        <span class="mi-price">₹${m.price}</span>
+        <span class="mi-pts">${STAR}${mult > 1 ? `<s>${m.points}</s>` : ''}+${pts} points</span>
+      </div>
+      <div class="mi-media"><div class="mi-img">${esc(m.emoji)}</div>
+        ${n ? `<div class="stepper"><button onclick="setQty('${m.id}',-1)" aria-label="${esc(m.name)} kam karein">−</button><span>${n}</span><button onclick="setQty('${m.id}',1)" aria-label="${esc(m.name)} badhaiye">+</button></div>`
+            : `<button class="addbtn" ${canOrder() ? '' : 'disabled'} onclick="setQty('${m.id}',1)">ADD +</button>`}
+      </div>
+    </article>`;
+  }).join('')).join('') || `<div class="m-empty"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><b style="display:block;color:var(--ink)">Koi dish nahi mili</b><span>${vegOnly ? 'Veg only filter hata kar dekhiye' : 'Menu abhi khaali hai'}</span></div>`;
+}
+function setQty(id, d) {
+  if (!canOrder()) { toast('Pehle QR scan kijiye 📱'); return; }
+  cart[id] = Math.max(0, Math.min(50, (cart[id] || 0) + d)); if (!cart[id]) delete cart[id];
+  cartDirty = true; buzz(10); renderMenu(); renderCartBar();
+}
+function cartTotals() {
+  const mult = me?.earnMult || 1; let total = 0, pts = 0, n = 0;
+  for (const [id, q] of Object.entries(cart)) { const m = menu?.find(x => x.id === id); if (!m) continue; total += m.price * q; pts += m.points * q; n += q; }
+  return { total, pts: Math.floor(pts * mult), n, mult };
+}
+function renderCartBar() {
+  const t = cartTotals();
+  const show = view === 'menu' && t.n > 0 && cartDirty;
+  $('cartbar').classList.toggle('hidden', !show);
+  if (!show) return;
+  $('cartTotal').textContent = `₹${t.total.toLocaleString('en-IN')}`;
+  $('cartInfo').textContent = `${t.n} item · +${t.pts} points milenge`;
+  $('cartBtn').textContent = me?.currentVisit?.items?.length ? 'Order update →' : 'Order bhejein →';
+}
+function reviewOrder() {
+  const t = cartTotals();
+  const lines = Object.entries(cart).map(([id, q]) => { const m = menu.find(x => x.id === id); return m ? `<div class="line" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span>${esc(m.emoji)} ${q} × ${esc(m.name)}</span><b>₹${m.price * q}</b></div>` : ''; }).join('');
+  sheet(`<h2>🛎️ Order confirm karein</h2><div style="margin:12px 0">${lines}</div>
+    <div style="display:flex;justify-content:space-between;font-size:17px;font-weight:800;margin:8px 0"><span>Total</span><span>₹${t.total.toLocaleString('en-IN')}</span></div>
+    <div class="ptag" style="font-size:14px;padding:6px 12px">🎁 +${t.pts} points milenge</div>
+    <p class="muted" style="margin:12px 0 16px">Order staff ke paas jayega. Serve ya bill hote hi points apne aap aapke account mein aa jayenge.</p>
+    <button class="btn block" id="sendOrder">Order bhejein</button><button class="btn block ghost" style="margin-top:8px" onclick="closeSheet()">Aur add karein</button>`);
+  $('sendOrder').onclick = async () => {
+    $('sendOrder').disabled = true;
+    try {
+      const r = await api('/api/order', { items: Object.entries(cart).map(([id, qty]) => ({ id, qty })) });
+      cartDirty = false; closeSheet(); buzz([30, 30]);
+      toast(`✅ Order bhej diya! +${r.points} points pending`);
+      await refresh(); go('home');
+    } catch (err) { toast(err.message); $('sendOrder').disabled = false; }
+  };
+}
+function renderOrderCard() {
+  const v = me.currentVisit;
+  if (!v) {
+    $('orderCard').innerHTML = `<div class="card order-card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div>${me.hasCheckin
+        ? `<b>😋 Aur kuch chahiye?</b><div class="muted">Dessert ya chai bhi order kijiye, uske bhi points milenge!</div>`
+        : `<b>🍛 Bhook lagi hai?</b><div class="muted">Menu se order kijiye, har dish par points milenge!</div>`}</div><button class="btn sm" onclick="go('menu')">${me.hasCheckin ? '+ Aur order' : 'Menu'}</button></div></div>`;
+    return;
+  }
+  if (!v.items.length) {
+    $('orderCard').innerHTML = `<div class="card order-card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><b>📍 Aap check-in ho chuke hain</b><div class="muted">Menu se order kijiye aur har dish par points paaiye</div></div><button class="btn sm" onclick="go('menu')">Menu</button></div></div>`;
+    return;
+  }
+  $('orderCard').innerHTML = `<div class="card order-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>🛎️ Aapka order</b><span class="status">Staff confirm karega</span></div>
+    ${v.items.map(i => `<div class="line"><span>${esc(i.emoji)} ${i.qty} × ${esc(i.name)}</span><span>₹${i.price * i.qty}</span></div>`).join('')}
+    <div class="line" style="border-top:1px solid var(--line);margin-top:6px;padding-top:8px;font-weight:800"><span>Total ₹${v.total.toLocaleString('en-IN')}</span><span style="color:var(--ok)">+${v.points} pts pending</span></div>
+    <button class="btn sm ghost" style="margin-top:10px" onclick="editOrder()">✏️ Order badlein</button></div>`;
+}
+// "Kaise kaam karta hai": aaj ke kaam ke hisaab se steps ko ✓ / abhi wala dikhana
+function renderHow() {
+  const start = new Date(); start.setHours(0, 0, 0, 0);
+  const today = me.history.filter(h => h.at >= start.getTime());
+  const has = p => today.some(h => h.note.startsWith(p));
+  const done = {
+    scan: !!me.hasCheckin,
+    order: !!me.currentVisit?.items?.length || has('🛎️') || has('🧾'),
+    confirm: has('🧾'), points: has('🧾'),
+    redeem: has('🎁 Redeem') || has('✅')
+  };
+  let nowSet = false;
+  document.querySelectorAll('#howSteps li').forEach(li => {
+    const d = done[li.dataset.step];
+    li.classList.toggle('done', d);
+    const isNow = !d && !nowSet && li.dataset.step !== 'scan' ? (nowSet = true) : false;
+    li.classList.toggle('now', isNow);
+  });
+  if (pub) { $('bWelcome').textContent = '+' + pub.welcomeBonus; if (pub.referralBonus != null) $('bRefer').textContent = '+' + pub.referralBonus; }
+}
+function editOrder() { cart = {}; me.currentVisit.items.forEach(i => cart[i.id] = i.qty); cartDirty = true; go('menu'); }
+
+// ---------- boot ----------
+let checkinDone = false;
+async function start() {
+  if (!pub) pub = await api('/api/public').catch(() => null);
+  if (pub) { $('rName').textContent = pub.restaurantName; $('wb').textContent = pub.welcomeBonus; document.title = pub.restaurantName + ' Rewards'; }
+  if (!token) {
+    $('auth').classList.remove('hidden'); $('app').classList.add('hidden');
+    $('scanNote').classList.toggle('hidden', !qrT); return;
+  }
+  $('auth').classList.add('hidden'); $('app').classList.remove('hidden');
+  if (!menu) await loadMenu();
+  await refresh();
+  if (qrT && !checkinDone) {
+    checkinDone = true; history.replaceState(null, '', '/');
+    try {
+      const r = await api('/api/checkin', { t: qrT });
+      await refresh(true);
+      celebrate('🎉', `Visit #${r.visits} record ho gaya!`, `${window._justJoined ? `Welcome bonus mil gaya aur ` : ''}1 stamp aapke card mein lag gaya. Ab Menu se order kijiye, har dish par points milenge!`);
+    } catch (err) {
+      if (err.status === 401) { token = null; store.del('fmj_token'); return start(); }
+      toast('ℹ️ ' + err.message);
+    }
+  } else if (window._justJoined) {
+    celebrate('🥳', 'Club mein swagat hai!', `Aapko ${pub?.welcomeBonus ?? 50} welcome points mil gaye. Agli visit par counter ka QR scan karna mat bhooliye.`);
+  }
+  window._justJoined = false;
+}
+
+function nextGoal(m) {
+  const paid = m.rewards.filter(r => !r.special).sort((a, b) => a.cost - b.cost);
+  return paid.find(r => r.cost > m.points) || null;
+}
+
+async function refresh(animateStamp) {
+  try { me = await api('/api/me'); }
+  catch (err) { if (err.status === 401) { token = null; store.del('fmj_token'); return start(); } return; }
+
+  // redemption served by staff → celebrate
+  if (prevPending && !me.pendingRedemption && Date.now() < prevPending.expiresAt) {
+    closeSheet(); celebrate('😋', 'Enjoy your treat!', `${esc(prevPending.rewardName)} aapko de diya gaya. Phir aaiyega!`);
+  }
+  prevPending = me.pendingRedemption;
+
+  // order billed by staff → points celebration
+  if (prevVisit && !me.currentVisit) {
+    const h = me.history.find(x => x.note.startsWith('🧾') && x.at > prevVisit.at);
+    if (h) { closeSheet(); celebrate('🎉', `+${h.delta} points mil gaye!`, `Aapka order confirm ho gaya. Ab aapke paas ${me.points} points hain. Khane ka maza lijiye! 😋`); }
+    cart = {}; cartDirty = false;
+  }
+  prevVisit = me.currentVisit;
+  if (me.currentVisit && !cartDirty) { cart = {}; me.currentVisit.items.forEach(i => cart[i.id] = i.qty); }
+  renderOrderCard();
+  renderHow();
+  if (view === 'menu') renderMenu();
+  renderCartBar();
+
+  const first = me.name.split(' ')[0];
+  $('avatar').textContent = me.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  $('hello').textContent = me.name;
+
+  let b = '';
+  if (me.birthdayToday) b += `<div class="banner bday"><span class="em">🎂</span><div><b>Happy Birthday, ${esc(first)}!</b><br>Free dessert aapka intezaar kar raha hai.</div></div>`;
+  if (me.doublePointsToday) b += `<div class="banner dbl"><span class="em">⚡</span><div><b>Aaj Double Points Day hai!</b><br>Har bill par 2x points.</div></div>`;
+  $('banners').innerHTML = b;
+
+  $('liveCode').innerHTML = me.pendingRedemption ? `<div class="live-code" onclick="openCode()"><span class="em">🎟️</span><div style="flex:1"><b>${esc(me.pendingRedemption.rewardName)}</b>Active code. Tap karke staff ko dikhaiye.</div><span style="font-size:20px">›</span></div>` : '';
+
+  const w = $('wallet'); w.className = 'wallet ' + me.tier.name;
+  $('wBrand').textContent = (pub?.restaurantName || 'Filmujha').toUpperCase();
+  $('wTier').textContent = '⭐ ' + me.tier.name + (me.tier.mult > 1 ? ` · ${me.tier.mult}x` : '');
+  countUp($('pts'), me.points);
+  $('wMob').textContent = '•••• ' + me.mobile.slice(-4);
+  if (me.tier.next) {
+    const span = me.tier.next.need + me.lifetimePoints - me.tier.min;
+    $('tierBar').style.width = Math.min(100, (me.lifetimePoints - me.tier.min) / span * 100) + '%';
+    $('tierNext').textContent = `${me.tier.next.need} pts aur → ${me.tier.next.name}`;
+  } else { $('tierBar').style.width = '100%'; $('tierNext').textContent = '💎 Top tier member'; }
+
+  const ready = me.rewards.filter(r => r.canRedeem);
+  const goal = nextGoal(me);
+  $('nextCard').innerHTML = ready.length
+    ? `<div class="tile" style="background:var(--ok-soft)">${esc(ready[0].emoji)}</div><div class="body"><b>${ready.length} reward${ready.length > 1 ? 's' : ''} redeem ke liye ready!</b><div class="muted">${esc(ready[0].name)}${ready.length > 1 ? ` + ${ready.length - 1} aur` : ''}</div></div><button class="btn sm ok" onclick="go('rewards')">Dekhein</button>`
+    : goal
+      ? `<div class="tile">${esc(goal.emoji)}</div><div class="body"><b>${goal.cost - me.points} pts aur → ${esc(goal.name)}</b><div class="progress"><i style="width:${me.points / goal.cost * 100}%"></i></div></div>`
+      : `<div class="tile">🍽️</div><div class="body"><b>Har visit par points kamaiye</b><div class="muted">Bill par points milte hain</div></div>`;
+
+  $('stVisits').textContent = me.visits; $('stStamps').textContent = Math.min(me.stamps, me.stampTarget) + '/' + me.stampTarget; $('stLife').textContent = me.lifetimePoints;
+
+  const filled = Math.min(me.stamps, me.stampTarget);
+  $('stampCount').textContent = `${filled}/${me.stampTarget}`;
+  $('stampText').textContent = filled >= me.stampTarget ? `🎉 Card full! "${me.stampReward}" redeem kijiye` : `${me.stampTarget - filled} aur visits → ${me.stampReward}`;
+  $('stamps').innerHTML = Array.from({ length: me.stampTarget }, (_, i) => {
+    const on = i < filled, last = i === me.stampTarget - 1;
+    const pop = animateStamp && prevStamps !== null && i >= Math.min(prevStamps, me.stampTarget) && on;
+    return `<div class="stamp ${on ? 'on' : ''} ${last ? 'last' : ''} ${pop ? 'pop' : ''}">${on ? '🍛' : last ? '🎁' : i + 1}</div>`;
+  }).join('');
+  prevStamps = me.stamps;
+
+  // ready rewards pehle, phir jo sabse paas hain
+  const sortedR = me.rewards.slice().sort((a, b) => (b.canRedeem - a.canRedeem) || ((a.cost - me.points) - (b.cost - me.points)));
+  $('carousel').innerHTML = sortedR.map(r => {
+    const pct = r.cost ? Math.min(100, me.points / r.cost * 100) : 100;
+    return `<div class="rcard ${r.canRedeem ? 'ready' : ''}" onclick="askRedeem('${r.id}')" role="button" aria-label="${esc(r.name)}">
+      <div class="r-img">${esc(r.emoji)}
+        <span class="r-badge">${r.canRedeem ? `<svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg>READY` : `<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>${Math.round(pct)}%`}</span>
+      </div>
+      <div class="r-name">${esc(r.name)}</div>
+      ${r.canRedeem ? '' : `<div class="r-bar"><i style="width:${pct}%"></i></div>`}
+      <div class="r-foot">
+        <span class="r-cost">${STAR}${r.cost ? r.cost : 'FREE'}</span>
+        ${r.canRedeem ? `<span class="r-go">Redeem →</span>` : `<span class="r-need">${r.cost - me.points} aur</span>`}
+      </div>
+    </div>`;
+  }).join('') || '<p class="muted" style="padding:0 2px">Abhi koi reward nahi.</p>';
+
+  renderRewardsPage();
+
+  renderHistory();
+  renderInvite();
+}
+
+// ---------- rewards page ----------
+function ring(pct) {
+  const c = 2 * Math.PI * 22, off = c * (1 - Math.min(1, pct / 100));
+  return `<svg class="ring" viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" class="rg-bg"/><circle cx="26" cy="26" r="22" class="rg-fg" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/></svg>`;
+}
+function renderRewardsPage() {
+  const ready = me.rewards.filter(r => r.canRedeem);
+  const locked = me.rewards.filter(r => !r.canRedeem).sort((a, b) => a.cost - b.cost);
+  const next = locked[0];
+  const tierPct = me.tier.next ? Math.min(100, (me.lifetimePoints - me.tier.min) / (me.tier.next.need + me.lifetimePoints - me.tier.min) * 100) : 100;
+  $('rwHero').innerHTML = `
+    <div class="rw-top"><div><span class="rw-lbl">Aapke points</span><div class="rw-pts">${me.points}</div></div>
+      <span class="rw-tier">${STAR}${esc(me.tier.name)}${me.tier.mult > 1 ? ` · ${me.tier.mult}x` : ''}</span></div>
+    ${next ? `<div class="rw-next"><div class="rw-next-tx"><span>Agla reward</span><b>${esc(next.emoji)} ${esc(next.name)}</b></div><b class="rw-need">${next.cost - me.points} pts aur</b></div>
+      <div class="rw-bar"><i style="width:${Math.min(100, me.points / next.cost * 100)}%"></i></div>`
+      : `<div class="rw-next"><div class="rw-next-tx"><span>Badhai ho!</span><b>Saare rewards unlock ho gaye 🎉</b></div></div>`}
+    <div class="rw-chips"><span>${ready.length} ready</span><span>${locked.length} locked</span><span>${me.tier.next ? `${me.tier.next.need} pts → ${me.tier.next.name}` : 'Top tier 💎'}</span></div>`;
+
+  const p = me.pendingRedemption;
+  $('rwCode').innerHTML = p ? `<div class="rw-live" onclick="openCode()" role="button"><span class="dot"></span><div style="flex:1;min-width:0"><b>${esc(p.rewardName)}</b><span>Code ${p.code} · tap karke staff ko dikhaiye</span></div><span class="go">Kholein →</span></div>` : '';
+
+  const readyHtml = ready.map(r => `
+    <article class="rw-card ready ${r.special ? 'special' : ''}">
+      <div class="rw-img">${esc(r.emoji)}<span class="r-badge"><svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg>${r.special ? 'SPECIAL' : 'READY'}</span></div>
+      <b class="rw-name">${esc(r.name)}</b>
+      <span class="rw-cost">${r.cost ? `${STAR}${r.cost} points` : 'FREE'}</span>
+      <button class="rw-btn" ${p ? 'disabled' : ''} onclick="askRedeem('${r.id}')">${p ? 'Code active hai' : 'Redeem karein →'}</button>
+    </article>`).join('');
+  const lockedHtml = locked.map(r => {
+    const pct = r.cost ? me.points / r.cost * 100 : 0;
+    return `<div class="rw-row" onclick="askRedeem('${r.id}')" role="button">
+      <div class="rw-ring">${ring(pct)}<span>${esc(r.emoji)}</span></div>
+      <div class="rw-row-tx"><b>${esc(r.name)}</b><span>${STAR}${r.cost} points · ${Math.round(pct)}% pura</span></div>
+      <div class="rw-row-need"><b>${r.cost - me.points}</b><span>aur chahiye</span></div>
+    </div>`;
+  }).join('');
+  // bharosa + call to action (state ke hisaab se button)
+  const cta = p ? { t: 'Code kholein', fn: 'openCode()' }
+    : ready.length ? { t: 'Reward chuniye ↑', fn: "document.getElementById('rewardList').scrollIntoView({behavior:'smooth',block:'start'})" }
+    : { t: 'Menu se points kamaiye →', fn: "go('menu')" };
+  $('rwCta').innerHTML = `
+    <div class="cta-ic"><svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6Z"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg></div>
+    <div class="cta-tx"><b>Befikr redeem kijiye</b><span>Code use nahi hua? <b>10 minute</b> baad aapke points <b>apne aap wapas</b> aa jayenge.</span></div>
+    <button class="cta-btn" onclick="${cta.fn}">${cta.t}</button>`;
+
+  $('rewardList').innerHTML =
+    (ready.length ? `<div class="section-head"><h2>Abhi redeem karein</h2><span class="muted">${ready.length} ready</span></div><div class="rw-grid">${readyHtml}</div>` : '')
+    + (locked.length ? `<div class="section-head"><h2>Jaldi unlock honge</h2><span class="muted">${locked.length} rewards</span></div><div class="card rw-locked">${lockedHtml}</div>` : '')
+    + (!me.rewards.length ? `<div class="card h-empty"><b style="display:block;color:var(--ink)">Abhi koi reward nahi</b><span>Restaurant jald hi naye rewards jodega</span></div>` : '');
+}
+
+function countUp(el, to) {
+  const from = Number(el.dataset.v || 0); el.dataset.v = to;
+  if (from === to) { el.textContent = to; return; }
+  const t0 = performance.now(), d = 700;
+  const step = t => { const p = Math.min(1, (t - t0) / d); el.textContent = Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+
+// ---------- history ----------
+const HI = {
+  star: '<svg viewBox="0 0 24 24"><path d="m12 3 2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8Z"/></svg>',
+  gift: '<svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg>',
+  food: '<svg viewBox="0 0 24 24"><path d="M3 2v7a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V2M6 2v20M21 15V2a5 5 0 0 0-5 5v6a2 2 0 0 0 2 2h3Zm0 0v7"/></svg>',
+  scan: '<svg viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7.5" y="7.5" width="9" height="9" rx="1.5"/></svg>',
+  users: '<svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>',
+  check: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8L16.5 9"/></svg>',
+  undo: '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
+  tool: '<svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4Z"/></svg>',
+  up: '<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>',
+  down: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg>'
+};
+// ledger note → readable entry {type, icon, title, detail}
+function describe(h) {
+  const n = h.note.replace(/^(\p{Extended_Pictographic}️?)\s*/u, '');
+  const e = h.note;
+  if (e.startsWith('🧾')) return { k: 'earn', ic: HI.star, t: 'Order ke points', d: n.replace(/\s*→\s*\+\d+ pts/, '') };
+  if (e.startsWith('🛎️') || e.startsWith('🛎')) return { k: 'order', ic: HI.food, t: /update/.test(n) ? 'Order badla' : /Extra/.test(n) ? 'Extra order bheja' : 'Order bheja', d: n.replace(/^(Extra order|Order) (bheja|update kiya):\s*/, '') };
+  if (e.startsWith('📍')) return { k: 'visit', ic: HI.scan, t: 'QR check-in', d: n.replace(/\s*—\s*/, ' · ') };
+  if (e.startsWith('🤝')) return { k: 'bonus', ic: HI.users, t: 'Referral bonus', d: (n.match(/\((.*)\)/) || [, ''])[1] };
+  if (/^🎁 Redeem/.test(e)) return { k: 'spend', ic: HI.gift, t: 'Reward redeem kiya', d: n.replace(/^Redeem:\s*/, '') };
+  if (e.startsWith('🎁')) return { k: 'bonus', ic: HI.gift, t: n, d: 'Club join karne par' };
+  if (e.startsWith('✅')) return { k: 'earn', ic: HI.check, t: 'Reward mil gaya', d: n.replace(/\s*serve kiya gaya/, '') + ' · enjoy!' };
+  if (e.startsWith('🛠')) return { k: 'neutral', ic: HI.tool, t: 'Restaurant ki taraf se', d: n.replace(/^Manual adjust:\s*/, '') };
+  if (/^Refund/.test(e)) return { k: 'neutral', ic: HI.undo, t: 'Points wapas aaye', d: n.replace(/^Refund:\s*/, '') };
+  return { k: 'neutral', ic: HI.star, t: n, d: '' };
+}
+let histF = 'all';
+function renderHistory() {
+  const start = new Date(); start.setDate(1); start.setHours(0, 0, 0, 0);
+  const month = me.history.filter(h => h.at >= start.getTime());
+  const earned = month.filter(h => h.delta > 0).reduce((t, h) => t + h.delta, 0);
+  const spent = -month.filter(h => h.delta < 0).reduce((t, h) => t + h.delta, 0);
+  const orders = month.filter(h => h.note.startsWith('🧾')).length;
+  const rewards = month.filter(h => h.note.startsWith('✅')).length;
+  $('hSum').innerHTML = `<div class="top"><div><div class="lbl">${new Date().toLocaleDateString('en-IN', { month: 'long' })} mein kamaye</div><div class="net">+${earned}</div></div>
+      <div class="bal">Abhi balance<b>${me.points} pts</b></div></div>
+    <div class="h-grid">
+      <div>${HI.up}<b>${earned}</b><span>Kamaye</span></div>
+      <div>${HI.down}<b>${spent}</b><span>Kharche</span></div>
+      <div>${HI.food}<b>${orders}</b><span>Orders</span></div>
+      <div>${HI.gift}<b>${rewards}</b><span>Rewards</span></div>
+    </div>`;
+
+  const F = [['all', 'Sab'], ['earn', 'Kamaye'], ['spend', 'Kharche'], ['order', 'Orders']];
+  const match = h => histF === 'all' ? true : histF === 'earn' ? h.delta > 0 : histF === 'spend' ? h.delta < 0 : /^(🛎|🧾)/u.test(h.note);
+  $('hFilters').innerHTML = F.map(([k, l]) => `<button class="${k === histF ? 'on' : ''}" data-f="${k}">${l} <i>${me.history.filter(h => k === 'all' || (k === 'earn' ? h.delta > 0 : k === 'spend' ? h.delta < 0 : /^(🛎|🧾)/u.test(h.note))).length}</i></button>`).join('');
+  $('hFilters').querySelectorAll('button').forEach(b => b.onclick = () => { histF = b.dataset.f; renderHistory(); });
+
+  const list = me.history.filter(match);
+  if (!list.length) {
+    $('history').innerHTML = `<div class="card h-empty"><div class="h-ic t-neutral">${HI.undo}</div><b style="display:block;color:var(--ink)">${me.history.length ? 'Is filter mein kuch nahi' : 'Abhi koi activity nahi'}</b><span>Order kijiye aur points kamaiye!</span></div>`;
+    return;
+  }
+  const groups = {}, today = new Date().toDateString(), yest = new Date(Date.now() - 864e5).toDateString();
+  for (const h of list) {
+    const d = new Date(h.at).toDateString();
+    const label = d === today ? 'Aaj' : d === yest ? 'Kal' : new Date(h.at).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+    (groups[label] ||= []).push(h);
+  }
+  $('history').innerHTML = Object.entries(groups).map(([label, items]) => {
+    const net = items.reduce((t, h) => t + h.delta, 0);
+    return `<div class="h-day"><b>${label}</b>${net ? `<span style="color:var(--${net > 0 ? 'ok' : 'danger'})">${net > 0 ? '+' : ''}${net} pts</span>` : ''}</div>
+    <div class="card h-list">${items.map(h => {
+      const x = describe(h);
+      return `<div class="h-row"><div class="h-ic t-${x.k}">${x.ic}</div>
+        <div class="h-tx"><b>${esc(x.t)}</b><span>${esc(x.d)}${x.d ? ' · ' : ''}${new Date(h.at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span></div>
+        ${h.delta ? `<span class="h-amt ${h.delta > 0 ? 'plus' : 'minus'}">${h.delta > 0 ? '+' : '−'}${Math.abs(h.delta)}</span>` : ''}</div>`;
+    }).join('')}</div>`;
+  }).join('');
+}
+
+// ---------- redeem ----------
+function askRedeem(id) {
+  const r = me.rewards.find(x => x.id === id); if (!r) return;
+  if (me.pendingRedemption) return openCode();
+  if (!r.canRedeem) { toast(`${r.cost - me.points} points aur chahiye 💪`); return; }
+  sheet(`<div style="text-align:center"><div style="font-size:60px">${esc(r.emoji)}</div><h2 style="margin-top:8px">${esc(r.name)}</h2>
+    <p class="muted" style="margin:8px 0 18px">${r.cost ? `<b>${r.cost} points</b> katenge. Bache rahenge: ${me.points - r.cost}` : 'Ye reward FREE hai 🎉'}<br>Code 10 minute tak valid rahega. Counter par hi redeem karein.</p>
+    <button class="btn block" id="doRedeem">Haan, redeem karein</button><button class="btn block ghost" style="margin-top:8px" onclick="closeSheet()">Abhi nahi</button></div>`);
+  $('doRedeem').onclick = async () => {
+    $('doRedeem').disabled = true;
+    try { await api('/api/redeem', { rewardId: id }); buzz(40); await refresh(); openCode(); }
+    catch (err) { toast(err.message); closeSheet(); }
+  };
+}
+function openCode() {
+  const p = me.pendingRedemption; if (!p) return;
+  sheet(`<div style="text-align:center"><span class="chip" style="background:var(--ok-soft);color:var(--ok)">● Live code</span>
+    <h2 style="margin-top:12px">${esc(p.rewardName)}</h2><p class="muted" style="margin-top:4px">Ye code counter par staff ko dikhaiye</p>
+    <div class="codeboxes">${p.code.split('').map(d => `<span>${d}</span>`).join('')}</div>
+    <p class="timer">Expire hoga <b id="cdown">--:--</b> mein</p>
+    <p class="muted" style="margin:12px 0 16px">Use nahi kiya toh points apne aap wapas aa jayenge.</p>
+    <button class="btn block ghost" onclick="closeSheet()">Band karein</button></div>`);
+  const tick = () => {
+    const s = Math.max(0, Math.round((p.expiresAt - Date.now()) / 1000));
+    const el = $('cdown'); if (el) el.textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+    if (s <= 0) { closeSheet(); refresh(); }
+  };
+  tick(); window._tick = setInterval(tick, 1000);
+}
+
+// ---------- invite ----------
+const refLink = () => `${location.origin}/?ref=${encodeURIComponent(me.referralCode)}`;
+const refText = () => `${pub?.restaurantName || 'Filmujha'} Rewards join karo! Mera code ${me.referralCode} use karo, dono ko +${pub?.referralBonus ?? 100} bonus points milenge 🍛 ${refLink()}`;
+function shareWA() { window.open('https://wa.me/?text=' + encodeURIComponent(refText()), '_blank'); }
+function shareRef() { if (navigator.share) navigator.share({ title: 'Rewards invite', text: refText() }).catch(() => {}); else shareWA(); }
+async function copyText(t) { try { await navigator.clipboard.writeText(t); return true; } catch { return false; } }
+async function copyRef() {
+  const ok = await copyText(me.referralCode); buzz(15);
+  const b = document.querySelector('.copy'); b.classList.add('done'); $('copyTxt').textContent = ok ? 'Copied!' : me.referralCode;
+  setTimeout(() => { b.classList.remove('done'); $('copyTxt').textContent = 'Copy'; }, 1800);
+}
+async function copyLink() { toast(await copyText(refLink()) ? '🔗 Invite link copy ho gaya' : refLink()); }
+function renderInvite() {
+  const bonus = pub?.referralBonus ?? 100;
+  $('refCode').textContent = me.referralCode;
+  $('invBonus').textContent = '+' + bonus; $('invStepPts').textContent = `+${bonus} turant`;
+  $('refN').textContent = me.referrals.length; $('refPts').textContent = me.referralPoints;
+  $('refCount').textContent = me.referrals.length ? `${me.referrals.length} dost` : '';
+  $('refList').innerHTML = me.referrals.length
+    ? me.referrals.map(f => `<div class="friend"><div class="avatar">${esc(f.name[0] || '?').toUpperCase()}</div><div class="tx"><b>${esc(f.name)}</b><div class="muted">${new Date(f.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} ko join kiya</div></div><span class="pts">+${bonus}</span></div>`).join('')
+    : `<div class="ref-empty">Abhi koi dost join nahi hua.<br>Pehla invite bhejiye aur <b>+${bonus} points</b> kamaiye!</div>`;
+}
+
+start();
+setInterval(() => { if (token && me && document.visibilityState === 'visible') refresh(); }, 6000);
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "filmujha-loyalty",
+  "version": "1.0.0",
+  "description": "Filmujha restaurant loyalty QR system: customer app + staff admin",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}
