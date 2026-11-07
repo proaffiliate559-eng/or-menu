@@ -71,7 +71,8 @@ async function loadDb() {
   if (!SUPA) { try { return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); } catch { return DEFAULT_DATA(); } }
   // load fail ho toh setup-error mode — khaali data se asli data kabhi overwrite nahi hoga
   const kp = keyProblem(SUPA.key); if (kp) throw new Error(kp);
-  const r = await fetch(`${SUPA.url}/rest/v1/${SUPA.table}?id=eq.${encodeURIComponent(SUPA.row)}&select=data`, { headers: supaHeaders() });
+  // time-limit zaroori: bina iske galat URL / paused project par request hamesha atak jaati thi
+  const r = await fetch(`${SUPA.url}/rest/v1/${SUPA.table}?id=eq.${encodeURIComponent(SUPA.row)}&select=data`, { headers: supaHeaders(), signal: AbortSignal.timeout(15000) });
   if (!r.ok) throw new Error(`Supabase se data load nahi hua (HTTP ${r.status}): ${(await r.text()).slice(0, 300)}`);
   const rows = await r.json();
   return rows[0]?.data || DEFAULT_DATA();
@@ -86,7 +87,7 @@ function pushRemote() {
       dirty = false;
       try {
         const r = await fetch(`${SUPA.url}/rest/v1/${SUPA.table}`, {
-          method: 'POST', headers: { ...supaHeaders(), Prefer: 'resolution=merge-duplicates,return=minimal' },
+          method: 'POST', headers: { ...supaHeaders(), Prefer: 'resolution=merge-duplicates,return=minimal' }, signal: AbortSignal.timeout(15000),
           body: JSON.stringify({ id: SUPA.row, data: db, updated_at: new Date().toISOString() })
         });
         if (!r.ok) throw new Error(`HTTP ${r.status} ${(await r.text()).slice(0, 200)}`);
@@ -589,6 +590,7 @@ function diagnose(e) {
   if (/publishable|anon/i.test(m)) return { title: 'Galat Supabase key', fix: 'Render → Environment mein SUPABASE_SERVICE_KEY ko Supabase ki <b>secret</b> key (sb_secret_...) ya <b>service_role</b> key se badliye. <b>anon/publishable</b> key kaam nahi karegi.', detail: m };
   if (/PGRST205|Could not find the table|relation .* does not exist|HTTP 404/i.test(m)) return { title: 'Supabase mein table nahi mili', fix: 'Supabase → <b>SQL Editor</b> kholiye, repo ki <code>supabase/schema.sql</code> paste karke <b>Run</b> kijiye. 30 second mein app apne aap chalu ho jayega.', detail: m };
   if (/HTTP 401|HTTP 403|Invalid API key|JWT/i.test(m)) return { title: 'Supabase key galat hai', fix: 'Render → Environment mein <b>SUPABASE_SERVICE_KEY</b> dobara copy-paste kijiye (Supabase → Project Settings → API Keys → secret / service_role). Aage-peeche space na ho.', detail: m };
+  if (/timeout|aborted|HTTP 54\d|HTTP 50[234]/i.test(m)) return { title: 'Supabase jawab nahi de raha', fix: 'Supabase dashboard kholiye. Agar project <b>Paused</b> dikhe toh <b>Restore project</b> dabaiye (free projects 7 din use na hone par pause ho jaate hain). Saath hi <b>SUPABASE_URL</b> check kijiye: <code>https://&lt;project-id&gt;.supabase.co</code>.', detail: m };
   if (/fetch failed|ENOTFOUND|getaddrinfo|Invalid URL|ECONNREFUSED/i.test(m)) return { title: 'SUPABASE_URL galat hai', fix: 'Render → Environment mein <b>SUPABASE_URL</b> sirf itna hona chahiye: <code>https://&lt;project-id&gt;.supabase.co</code> (Supabase → Project Settings → API → Project URL).', detail: m };
   return { title: 'Supabase se connect nahi ho paaya', fix: 'SUPABASE_URL, SUPABASE_SERVICE_KEY aur app_state table check kijiye.', detail: m };
 }
@@ -653,9 +655,11 @@ async function tryLoad() {
   catch (e) { setupError = diagnose(e); console.error('\n❌ ' + setupError.title + ' — ' + e.message + '\n   30 second baad dobara koshish...\n'); return false; }
 }
 (async function boot() {
-  // Supabase fail ho toh bhi server chalu rahe (setup page + /healthz), aur 30s mein dobara koshish
-  if (!(await tryLoad())) { const t = setInterval(async () => { if (await tryLoad()) clearInterval(t); }, 30000); }
-  server.listen(PORT, '0.0.0.0', () => {
+  // PEHLE port kholo (Render ko turant "open port" dikhe), PHIR data load karo.
+  // Load hone tak har request ko "shuru ho raha hai" page milta hai; fail ho toh setup page + 30s retry.
+  setupError = { title: 'App shuru ho raha hai…', fix: 'Bas kuch second. Ye page apne aap refresh ho jayega.', detail: 'loading data' };
+  server.listen(PORT, '0.0.0.0', async () => {
+    if (!(await tryLoad())) { const t = setInterval(async () => { if (await tryLoad()) clearInterval(t); }, 30000); }
     console.log(`\n🍽️  ${db.settings.restaurantName} Loyalty server chal raha hai! (storage: ${SUPA ? 'Supabase' : 'data.json'})\n`);
     if (process.env.RENDER_EXTERNAL_URL) console.log(`  Live: ${process.env.RENDER_EXTERNAL_URL}   |   Admin: ${process.env.RENDER_EXTERNAL_URL}/admin`);
     console.log(`  Customer (is computer par): http://localhost:${PORT}`);
