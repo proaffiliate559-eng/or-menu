@@ -46,11 +46,16 @@ const DEFAULT_DATA = () => ({
 // ---------- Storage: Supabase (hosting par) ya data.json (local) ----------
 // Supabase set ho toh poora data ek jsonb row mein save hota hai (REST API, koi npm package nahi).
 // Env: SUPABASE_URL, SUPABASE_SERVICE_KEY  (optional: SUPABASE_TABLE=app_state, SUPABASE_ROW=main)
-const SUPA = process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY
+// Alag-alag naam bhi chalenge (Vercel ka Supabase integration SUPABASE_SERVICE_ROLE_KEY / NEXT_PUBLIC_SUPABASE_URL banata hai)
+const URL_VARS = ['SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_PROJECT_URL', 'VITE_SUPABASE_URL'];
+const KEY_VARS = ['SUPABASE_SERVICE_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_SECRET_KEY', 'SUPABASE_SERVICE_ROLE'];
+const pickEnv = names => names.find(n => (process.env[n] || '').trim());
+const ENV_URL_NAME = pickEnv(URL_VARS), ENV_KEY_NAME = pickEnv(KEY_VARS);
+const SUPA = ENV_URL_NAME && ENV_KEY_NAME
   ? {
       // galti se "/rest/v1" ya aakhri "/" laga ho toh hata do; quotes/spaces bhi
-      url: process.env.SUPABASE_URL.trim().replace(/^["']|["']$/g, '').replace(/\/+$/, '').replace(/\/rest\/v1$/i, ''),
-      key: process.env.SUPABASE_SERVICE_KEY.trim().replace(/^["']|["']$/g, '').replace(/^Bearer\s+/i, ''),
+      url: process.env[ENV_URL_NAME].trim().replace(/^["']|["']$/g, '').replace(/\/+$/, '').replace(/\/rest\/v1$/i, ''),
+      key: process.env[ENV_KEY_NAME].trim().replace(/^["']|["']$/g, '').replace(/^Bearer\s+/i, ''),
       table: process.env.SUPABASE_TABLE || 'app_state', row: process.env.SUPABASE_ROW || 'main'
     }
   : null;
@@ -600,7 +605,7 @@ function diagnose(e) {
   if (/HTTP 401|HTTP 403|Invalid API key|JWT/i.test(m)) return { title: 'Supabase key galat hai', fix: 'Render → Environment mein <b>SUPABASE_SERVICE_KEY</b> dobara copy-paste kijiye (Supabase → Project Settings → API Keys → secret / service_role). Aage-peeche space na ho.', detail: m };
   if (/timeout|aborted|HTTP 54\d|HTTP 50[234]/i.test(m)) return { title: 'Supabase jawab nahi de raha', fix: 'Supabase dashboard kholiye. Agar project <b>Paused</b> dikhe toh <b>Restore project</b> dabaiye (free projects 7 din use na hone par pause ho jaate hain). Saath hi <b>SUPABASE_URL</b> check kijiye: <code>https://&lt;project-id&gt;.supabase.co</code>.', detail: m };
   if (/fetch failed|ENOTFOUND|getaddrinfo|Invalid URL|ECONNREFUSED/i.test(m)) return { title: 'SUPABASE_URL galat hai', fix: 'Render → Environment mein <b>SUPABASE_URL</b> sirf itna hona chahiye: <code>https://&lt;project-id&gt;.supabase.co</code> (Supabase → Project Settings → API → Project URL).', detail: m };
-  return { title: 'Supabase se connect nahi ho paaya', fix: 'SUPABASE_URL, SUPABASE_SERVICE_KEY aur app_state table check kijiye.', detail: m };
+  return { title: 'Supabase se connect nahi ho paaya', fix: `${ENV_URL_NAME || 'SUPABASE_URL'}, ${ENV_KEY_NAME || 'SUPABASE_SERVICE_KEY'} aur app_state table check kijiye.`, detail: m };
 }
 function setupPage(res, api) {
   if (api) return send(res, 503, { error: 'Setup adhoora: ' + setupError.title });
@@ -691,8 +696,18 @@ async function vercelHandleOne(req, res) {
   if (url.searchParams.has('__p')) pathname = url.searchParams.get('__p') === '__healthz' ? '/healthz' : '/api/' + url.searchParams.get('__p');
   const key = `${req.method} ${pathname}`;
   try {
-    if (!SUPA) { setupError = { title: 'Vercel par Supabase zaroori hai', fix: 'Vercel → Project → Settings → <b>Environment Variables</b> mein <b>SUPABASE_URL</b> aur <b>SUPABASE_SERVICE_KEY</b> daaliye, phir <b>Redeploy</b> kijiye. Vercel par data.json save nahi hota.', detail: 'SUPABASE_URL / SUPABASE_SERVICE_KEY missing' }; }
-    if (pathname === '/healthz') return send(res, 200, { ok: true, storage: SUPA ? 'supabase' : 'none', host: 'vercel', setupError: setupError ? setupError.title : null });
+    // sirf env ke NAAM (value kabhi nahi) — galat naam/missing turant pakadne ke liye
+    const supaNames = Object.keys(process.env).filter(n => /SUPABASE/i.test(n)).sort();
+    if (!SUPA) {
+      const missing = [!ENV_URL_NAME && 'SUPABASE_URL', !ENV_KEY_NAME && 'SUPABASE_SERVICE_KEY'].filter(Boolean);
+      setupError = {
+        title: 'Vercel par Supabase zaroori hai',
+        fix: `Vercel → Project → Settings → <b>Environment Variables</b> mein <b>${missing.join('</b> aur <b>')}</b> daaliye (Environment: <b>Production</b> par tick), phir <b>Deployments → Redeploy</b> kijiye.`
+          + (supaNames.length ? `<br><br>Abhi ye Supabase naam mile: <code>${supaNames.join('</code>, <code>')}</code>` : '<br><br>Abhi ek bhi SUPABASE wala variable nahi mila.'),
+        detail: 'missing: ' + missing.join(', ')
+      };
+    }
+    if (pathname === '/healthz') return send(res, 200, { ok: true, storage: SUPA ? 'supabase' : 'none', host: 'vercel', env: { url: ENV_URL_NAME || null, key: ENV_KEY_NAME || null, supabaseNamesFound: supaNames }, setupError: setupError ? setupError.title : null });
     if (!SUPA) return setupPage(res, pathname.startsWith('/api/'));
     if (!pathname.startsWith('/api/')) {
       // backup: agar koi page request function tak aa jaye toh static file par bhej do (query jaise ?t= / ?ref= saath)
